@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FieldProof</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#17322B" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #17322B;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+  }
+  .card { max-width: 420px; }
+  h1 { font-size: 26px; margin-bottom: 8px; }
+  p { color: #cfe0d8; font-size: 15px; line-height: 1.5; }
+  a.btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 24px;
+    background: #fff;
+    color: #17322B;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  code { background: rgba(255,255,255,.1); padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>FieldProof</h1>
+    <p>
+      Evidencia fotografica de campo. Cada empresa clienta tiene su propio enlace
+      <code>/c/&lt;slug-empresa&gt;</code> para que sus trabajadores suban fotos,
+      y <code>/c/&lt;slug-empresa&gt;/galeria</code> para que su administrador las vea.
+    </p>
+    <a class="btn" href="/admin">Entrar al panel de plataforma</a>
+  </div>
+</body>
+</html>
