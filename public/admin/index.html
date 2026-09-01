@@ -126,6 +126,17 @@
             <button class="btn btn-primary" id="btnAddSite" style="width:auto;padding:10px 18px">Agregar sitio</button>
           </div>
           <div class="error-msg" id="siteError"></div>
+
+          <div class="bulk-panel">
+            <h4>Cargar varios sitios a la vez</h4>
+            <p class="hint">Archivo .xlsx o .csv con dos columnas, sin encabezado especial: <strong>Locacion</strong> y <strong>Nombre</strong>. Ejemplo: <code>0077</code> / <code>Jewel Osco</code>. La primera fila se toma como encabezado y se ignora. Si tus codigos tienen ceros a la izquierda (como <code>0077</code>), formatea esa columna como <strong>Texto</strong> en Excel antes de escribirlos — si no, Excel los guarda como <code>77</code> y el cero se pierde antes de subir el archivo.</p>
+            <div class="inline-form">
+              <input type="file" id="bulkSitesFile" accept=".xlsx,.csv" />
+              <button class="btn btn-secondary" id="btnBulkUpload" style="width:auto;padding:10px 18px">Subir archivo</button>
+            </div>
+            <div class="error-msg" id="bulkError"></div>
+            <div id="bulkResult"></div>
+          </div>
         </div>
       </div>
     </div>

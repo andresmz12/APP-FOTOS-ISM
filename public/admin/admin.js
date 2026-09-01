@@ -248,6 +248,43 @@
     }
   });
 
+  $('btnBulkUpload').addEventListener('click', async () => {
+    $('bulkError').textContent = '';
+    $('bulkResult').innerHTML = '';
+    const fileInput = $('bulkSitesFile');
+    const file = fileInput.files[0];
+    if (!file) return ($('bulkError').textContent = 'Elige un archivo .xlsx o .csv primero');
+
+    $('btnBulkUpload').disabled = true;
+    $('btnBulkUpload').textContent = 'Subiendo...';
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`/api/admin/companies/${currentCompany.id}/sites/bulk`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Error de red');
+
+      const parts = [`<div class="bulk-summary">✓ ${data.created} sitio(s) creados</div>`];
+      if (data.skipped && data.skipped.length) {
+        parts.push(`<div class="bulk-skipped"><strong>${data.skipped.length} fila(s) omitidas:</strong><ul>${data.skipped.map((s) => `<li>Fila ${s.row}: ${s.reason}</li>`).join('')}</ul></div>`);
+      }
+      $('bulkResult').innerHTML = parts.join('');
+      fileInput.value = '';
+      await loadSites();
+      await loadCompanies();
+      toast(`${data.created} sitio(s) creados`);
+    } catch (err) {
+      $('bulkError').textContent = err.message;
+    } finally {
+      $('btnBulkUpload').disabled = false;
+      $('btnBulkUpload').textContent = 'Subir archivo';
+    }
+  });
+
   if (token) {
     api('/companies').then(() => showApp()).catch(() => { sessionStorage.removeItem('fp-admin-token'); showLogin(); });
   } else {

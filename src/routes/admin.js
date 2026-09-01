@@ -1,10 +1,14 @@
 const express = require('express');
+const multer = require('multer');
+const ExcelJS = require('exceljs');
+const { Readable } = require('stream');
 const pool = require('../db/pool');
 const asyncHandler = require('../utils/asyncHandler');
 const { requirePlatformAuth } = require('../middleware/platformAuth');
 const { sign } = require('../utils/token');
 
 const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
 
 function slugify(text) {
   return text
@@ -113,6 +117,64 @@ router.post('/companies/:id/sites', asyncHandler(async (req, res) => {
     if (err.code === '23505') return res.status(409).json({ error: 'Ya existe un sitio con ese codigo en esta empresa' });
     throw err;
   }
+}));
+
+// POST /api/admin/companies/:id/sites/bulk -> carga masiva desde Excel/CSV
+// con dos columnas: Locacion (codigo) y Nombre. La primera fila se asume
+// como encabezado y se ignora.
+router.post('/companies/:id/sites/bulk', upload.single('file'), asyncHandler(async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Falta el archivo' });
+
+  const workbook = new ExcelJS.Workbook();
+  const isCsv = /\.csv$/i.test(req.file.originalname);
+
+  try {
+    if (isCsv) {
+      // map identity evita que exceljs convierta valores como "0077" en el
+      // numero 77, perdiendo el cero a la izquierda (solo pasa en CSV; en
+      // xlsx el tipo de celda ya viene definido en el archivo).
+      await workbook.csv.read(Readable.from(req.file.buffer), { map: (value) => value });
+    } else {
+      await workbook.xlsx.load(req.file.buffer);
+    }
+  } catch (err) {
+    return res.status(400).json({ error: 'No se pudo leer el archivo. Usa un .xlsx o .csv valido.' });
+  }
+
+  const sheet = workbook.worksheets[0];
+  if (!sheet || sheet.rowCount < 2) {
+    return res.status(400).json({ error: 'El archivo no tiene filas de datos (solo se detecto el encabezado o esta vacio).' });
+  }
+
+  const createdSites = [];
+  const skipped = [];
+
+  for (let i = 2; i <= sheet.rowCount; i++) {
+    const row = sheet.getRow(i);
+    const siteCode = String(row.getCell(1).value ?? '').trim();
+    const name = String(row.getCell(2).value ?? '').trim();
+
+    if (!siteCode && !name) continue; // fila vacia, se ignora sin reportar
+
+    if (!siteCode) { skipped.push({ row: i, reason: 'Falta la locacion (codigo)' }); continue; }
+    if (!name) { skipped.push({ row: i, reason: `Falta el nombre para la locacion ${siteCode}` }); continue; }
+
+    try {
+      const { rows } = await pool.query(
+        'insert into sites (company_id, site_code, name) values ($1, $2, $3) returning *',
+        [req.params.id, siteCode, name]
+      );
+      createdSites.push(rows[0]);
+    } catch (err) {
+      if (err.code === '23505') {
+        skipped.push({ row: i, reason: `Ya existe un sitio con la locacion ${siteCode}` });
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  res.json({ created: createdSites.length, sites: createdSites, skipped });
 }));
 
 // PATCH /api/admin/sites/:id
