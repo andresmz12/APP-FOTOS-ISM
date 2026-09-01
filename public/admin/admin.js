@@ -137,11 +137,42 @@
     $('dPlan').value = currentCompany.plan;
     $('dMaxSites').value = currentCompany.max_sites;
     $('dLogo').value = currentCompany.logo_url || '';
-    $('dPublicUrl').innerHTML = `URL trabajador: <code>${location.origin}/c/${currentCompany.slug}</code> — URL galeria: <code>${location.origin}/c/${currentCompany.slug}/galeria</code>`;
+    renderPublicUrls(currentCompany.slug);
     $('btnToggleStatus').textContent = currentCompany.status === 'active' ? 'Suspender empresa' : 'Reactivar empresa';
     $('dError').textContent = '';
     showDetail();
     await loadSites();
+  }
+
+  function renderPublicUrls(slug) {
+    const worker = `${location.origin}/c/${slug}`;
+    const gallery = `${location.origin}/c/${slug}/galeria`;
+    $('dPublicUrls').innerHTML = `
+      <div class="link-row">
+        <div>
+          <span class="link-label">Enlace para trabajadores</span>
+          <a href="${worker}" target="_blank" rel="noopener">${worker}</a>
+        </div>
+        <button class="btn btn-secondary" data-copy="${worker}">Copiar</button>
+      </div>
+      <div class="link-row">
+        <div>
+          <span class="link-label">Enlace de galeria (admin de la empresa)</span>
+          <a href="${gallery}" target="_blank" rel="noopener">${gallery}</a>
+        </div>
+        <button class="btn btn-secondary" data-copy="${gallery}">Copiar</button>
+      </div>
+    `;
+    $('dPublicUrls').querySelectorAll('[data-copy]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(btn.dataset.copy);
+          toast('Enlace copiado');
+        } catch {
+          toast('No se pudo copiar, selecciona el enlace manualmente', true);
+        }
+      });
+    });
   }
 
   $('btnSaveCompany').addEventListener('click', async () => {
