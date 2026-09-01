@@ -571,14 +571,37 @@
   }
 
   // Si la nube no responde (cuenta de Cloudinary mal configurada, sin
-  // internet, etc.), en vez de solo mostrar un error tecnico se descarga la
-  // foto/video directo al telefono del trabajador y se avisa claramente que
-  // NO quedo subida al sistema, para que la evidencia no se pierda.
-  function downloadLocally(entry) {
+  // internet, etc.), en vez de solo mostrar un error tecnico se guarda la
+  // foto/video directo en el telefono del trabajador y se avisa claramente
+  // que NO quedo subida al sistema, para que la evidencia no se pierda.
+  //
+  // Se intenta primero con la Web Share API: en iOS/Android abre el panel
+  // nativo de compartir con la opcion "Guardar imagen"/"Guardar en Fotos",
+  // que deja el archivo en el rollo de fotos como cualquier otra foto. Si no
+  // esta disponible (o falla por algo distinto a que el usuario cancelo),
+  // cae a la descarga normal <a download> (esa si guarda en Archivos/Files,
+  // no en la galeria -- es una limitacion del navegador, no hay forma de
+  // forzar el guardado directo en Fotos sin que el usuario elija la opcion).
+  async function downloadLocally(entry) {
+    const filename = entry.file.name || `evidencia-${entry.id}`;
+
+    if (navigator.share && navigator.canShare) {
+      try {
+        const file = new File([entry.blob], filename, { type: entry.blob.type });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file] });
+          return;
+        }
+      } catch (err) {
+        if (err && err.name === 'AbortError') return; // el usuario cerro el panel a proposito
+        // cualquier otro error (no soportado, permiso perdido, etc.) cae a la descarga normal abajo
+      }
+    }
+
     try {
       const a = document.createElement('a');
       a.href = entry.previewUrl;
-      a.download = entry.file.name || `evidencia-${entry.id}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -599,29 +622,39 @@
     // vez de hacerlos esperar cada uno su propio intento fallido.
     let cloudFailed = false;
 
-    for (const entry of state.files) {
-      if (entry.status === 'done' && entry.uploadedMedia) continue;
-      if (entry.status === 'local') continue; // ya se guardo en el telefono, no se reintenta solo
+    // Sube hasta 3 archivos a la vez en vez de uno por uno: con varias fotos
+    // en el lote, subirlas en serie es lo que mas se siente como "se demora
+    // mucho" -- en paralelo se aprovecha mejor el ancho de banda disponible.
+    const UPLOAD_CONCURRENCY = 3;
+    const pending = state.files.filter((f) => !(f.status === 'done' && f.uploadedMedia) && f.status !== 'local');
+    let nextIndex = 0;
 
-      if (cloudFailed) {
-        downloadLocally(entry);
-        entry.status = 'local';
+    async function worker() {
+      while (nextIndex < pending.length) {
+        const entry = pending[nextIndex++];
+
+        if (cloudFailed) {
+          await downloadLocally(entry);
+          entry.status = 'local';
+          renderThumbs();
+          continue;
+        }
+
+        entry.status = 'uploading';
         renderThumbs();
-        continue;
+        try {
+          entry.uploadedMedia = await uploadOne(entry);
+          entry.status = 'done';
+        } catch (err) {
+          cloudFailed = true;
+          await downloadLocally(entry);
+          entry.status = 'local';
+        }
+        renderThumbs();
       }
-
-      entry.status = 'uploading';
-      renderThumbs();
-      try {
-        entry.uploadedMedia = await uploadOne(entry);
-        entry.status = 'done';
-      } catch (err) {
-        cloudFailed = true;
-        downloadLocally(entry);
-        entry.status = 'local';
-      }
-      renderThumbs();
     }
+
+    await Promise.all(Array.from({ length: Math.min(UPLOAD_CONCURRENCY, pending.length) }, worker));
 
     const uploaded = state.files.map((f) => f.uploadedMedia).filter(Boolean);
     const localCount = state.files.filter((f) => f.status === 'local').length;
