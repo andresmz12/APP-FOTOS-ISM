@@ -14,15 +14,71 @@
     site: null,
     employeeName: '',
     jobType: 'Rutina',
-    files: [] // { id, kind, file, blob, previewUrl, lat, lng, address, status }
+    files: [] // { id, kind, file, blob, previewUrl, lat, lng, address, status, progress }
   };
+
+  let currentGeo = null; // se resuelve una vez al entrar al paso de fotos, se reusa para todo el lote
 
   const $ = (id) => document.getElementById(id);
   const steps = { 1: $('step1'), 2: $('step2'), 3: $('step3'), 4: $('step4') };
+  const stepOrder = [1, 2, 3, 4];
+  let currentStepNum = 1;
+
+  // --- Transiciones direccionales tipo app nativa entre pasos ---
+  // transitionGen evita que dos transiciones superpuestas (ej. navegacion
+  // rapida antes de que termine la limpieza de la anterior) dejen un paso
+  // viejo visible encimado con el nuevo.
+  let transitionGen = 0;
+
+  function cleanupStep(el) {
+    el.classList.remove('active', 'anim-enter-fwd', 'anim-enter-back', 'anim-exit-fwd', 'anim-exit-back', 'anim-center');
+    el.style.position = '';
+    el.style.top = '';
+    el.style.left = '';
+    el.style.width = '';
+  }
 
   function goToStep(n) {
-    Object.values(steps).forEach((el) => el.classList.remove('active'));
-    steps[n].classList.add('active');
+    if (n === currentStepNum) return;
+    transitionGen++;
+    const gen = transitionGen;
+    const forward = stepOrder.indexOf(n) > stepOrder.indexOf(currentStepNum);
+    const currentEl = steps[currentStepNum];
+    const nextEl = steps[n];
+
+    // Por si una transicion anterior no alcanzo a limpiar su paso saliente,
+    // se fuerza de inmediato aqui antes de arrancar la nueva.
+    Object.values(steps).forEach((el) => {
+      if (el !== currentEl && el !== nextEl) cleanupStep(el);
+    });
+
+    nextEl.classList.add('active');
+    nextEl.classList.add(forward ? 'anim-enter-fwd' : 'anim-enter-back');
+
+    if (currentEl) {
+      currentEl.style.position = 'absolute';
+      currentEl.style.top = '0';
+      currentEl.style.left = '0';
+      currentEl.style.width = '100%';
+    }
+
+    void nextEl.offsetWidth; // fuerza reflow para que la transicion inicial no se salte
+
+    requestAnimationFrame(() => {
+      if (gen !== transitionGen) return;
+      nextEl.classList.remove('anim-enter-fwd', 'anim-enter-back');
+      nextEl.classList.add('anim-center');
+      if (currentEl) currentEl.classList.add(forward ? 'anim-exit-fwd' : 'anim-exit-back');
+    });
+
+    setTimeout(() => {
+      if (gen !== transitionGen) return; // ya arranco otra transicion, esta limpieza ya no aplica
+      if (currentEl && currentEl !== nextEl) cleanupStep(currentEl);
+      nextEl.classList.remove('anim-center');
+    }, 340);
+
+    currentStepNum = n;
+    window.scrollTo(0, 0);
 
     const progress = $('stepProgress');
     if (progress) {
@@ -76,10 +132,11 @@
 
   // --- Paso 1: un solo codigo. Si es el PIN de admin, se manda directo a la
   // galeria (guardando la credencial para que no tenga que volver a escribirla).
-  // Si es un codigo de sitio, sigue el flujo normal de subir evidencia.
+  // Si es un codigo de sitio, muestra una confirmacion breve y sigue al paso 2.
   $('btnCheckin').addEventListener('click', async () => {
     const code = $('siteCode').value.trim();
     $('step1Error').textContent = '';
+    $('siteConfirm').classList.add('hidden');
     if (!code) return ($('step1Error').textContent = 'Escribe tu codigo de acceso');
 
     $('btnCheckin').disabled = true;
@@ -87,6 +144,7 @@
       const result = await api('/resolve-code', { method: 'POST', body: JSON.stringify({ code }) });
 
       if (result.role === 'admin') {
+        $('checkinLabel').textContent = 'Entrando como administrador...';
         sessionStorage.setItem(`fp-cred-${slug}`, JSON.stringify({ param: 'admin_pin', value: code }));
         location.href = `/c/${slug}/galeria`;
         return;
@@ -96,11 +154,16 @@
       state.site = { ...site, site_code: code };
       $('siteNameDisplay').textContent = site.name;
       $('siteAddressDisplay').textContent = site.address || '';
+
+      $('siteConfirmName').textContent = site.name;
+      $('siteConfirm').classList.remove('hidden');
+      await new Promise((r) => setTimeout(r, 450));
       goToStep(2);
     } catch (err) {
       $('step1Error').textContent = err.message;
     } finally {
       $('btnCheckin').disabled = false;
+      $('checkinLabel').textContent = 'Continuar';
     }
   });
 
@@ -116,20 +179,86 @@
   $('btnToStep3').addEventListener('click', () => {
     state.employeeName = $('employeeName').value.trim();
     goToStep(3);
+    requestLocation();
   });
 
   // --- Paso 3: fotos ---
   $('btnBackTo2').addEventListener('click', () => goToStep(2));
 
-  function getLocation() {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) return reject(new Error('Tu navegador no soporta geolocalizacion'));
-      navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => reject(new Error('Debes permitir el acceso a tu ubicacion para tomar fotos')),
-        { enableHighAccuracy: true, timeout: 15000 }
-      );
-    });
+  // ============================================================
+  // GEOLOCALIZACION: se resuelve una sola vez al entrar al paso de
+  // fotos (no hasta que tocas "tomar foto"), con reintento automatico
+  // en dos etapas: primero alta precision (GPS real), y si falla o
+  // tarda, un segundo intento con precision mas baja (wifi/red) antes
+  // de rendirse — esto es lo que mas falla en Android bajo techo o con
+  // mala senal, aunque la ubicacion este activada.
+  // ============================================================
+
+  function setPhotoControlsEnabled(enabled) {
+    $('btnTakePhoto').disabled = !enabled;
+    // "Elegir de galeria" siempre esta disponible, no depende del GPS
+    $('btnPickGallery').disabled = false;
+  }
+
+  function requestLocation() {
+    currentGeo = null;
+    setPhotoControlsEnabled(false);
+    const banner = $('geoBanner');
+    banner.className = 'geo-banner geo-loading';
+    banner.innerHTML = '<svg class="icon spin" viewBox="0 0 20 20" fill="none"><path d="M17 10a7 7 0 1 1-2.05-4.95" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Obteniendo tu ubicacion...</span>';
+
+    if (!navigator.geolocation) {
+      showGeoError('Tu navegador no soporta geolocalizacion.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => handleGeoSuccess(pos),
+      () => {
+        // Primer intento con alta precision fallo o tardo: reintenta con
+        // precision mas baja antes de rendirse.
+        navigator.geolocation.getCurrentPosition(
+          (pos) => handleGeoSuccess(pos),
+          (err2) => showGeoError(geoErrorMessage(err2)),
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 120000 }
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  async function handleGeoSuccess(pos) {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const address = await reverseGeocodeClient(lat, lng);
+    currentGeo = { lat, lng, address: address || `${lat.toFixed(6)}, ${lng.toFixed(6)}` };
+
+    const banner = $('geoBanner');
+    banner.className = 'geo-banner geo-ok';
+    banner.innerHTML = `<svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M10 18s6-5.2 6-9.6A6 6 0 1 0 4 8.4C4 12.8 10 18 10 18Z" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 8.4l1.7 1.7 3.3-3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${currentGeo.address}</span>`;
+    setPhotoControlsEnabled(true);
+  }
+
+  function geoErrorMessage(err) {
+    if (err && err.code === 1) {
+      return 'Se nego el permiso de ubicacion. En Android: Ajustes → Apps → (este navegador) → Permisos → Ubicacion → permitir. Luego reintenta.';
+    }
+    if (err && err.code === 3) {
+      return 'Se tardo demasiado en obtener tu ubicacion (senal debil). Si puedes, sal a un lugar mas despejado y reintenta.';
+    }
+    if (err && err.code === 2) {
+      return 'No se pudo determinar tu ubicacion en este momento. Revisa que el GPS este activado y reintenta.';
+    }
+    return 'No pudimos obtener tu ubicacion. Revisa que este activada y reintenta.';
+  }
+
+  function showGeoError(msg) {
+    currentGeo = null;
+    setPhotoControlsEnabled(false);
+    const banner = $('geoBanner');
+    banner.className = 'geo-banner geo-error';
+    banner.innerHTML = `<svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M10 18s6-5.2 6-9.6A6 6 0 1 0 4 8.4C4 12.8 10 18 10 18Z" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 6.9l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>${msg}</span><button class="geo-retry" id="btnGeoRetry" type="button">Reintentar</button>`;
+    $('btnGeoRetry').addEventListener('click', requestLocation);
   }
 
   // Construye una direccion corta y legible a partir de los componentes de Nominatim
@@ -216,30 +345,16 @@
     });
   }
 
-  async function addFiles(fileList, requireGps) {
+  async function addFiles(fileList) {
     const files = Array.from(fileList);
     if (!files.length) return;
 
-    let loc = { lat: null, lng: null };
-    if (requireGps) {
-      try {
-        toast('Obteniendo ubicacion...');
-        loc = await getLocation();
-      } catch (err) {
-        $('step3Error').textContent = err.message;
-        return;
-      }
-    } else {
-      try { loc = await getLocation(); } catch { /* opcional */ }
-    }
-
-    let address = null;
-    if (loc.lat && loc.lng) address = await reverseGeocodeClient(loc.lat, loc.lng);
+    const loc = currentGeo || { lat: null, lng: null, address: null };
 
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
       const id = Math.random().toString(36).slice(2);
-      const entry = { id, kind: isVideo ? 'video' : 'image', file, lat: loc.lat, lng: loc.lng, address, status: 'ready' };
+      const entry = { id, kind: isVideo ? 'video' : 'image', file, lat: loc.lat, lng: loc.lng, address: loc.address, status: 'ready', progress: 0 };
 
       if (!isVideo) {
         try {
@@ -262,6 +377,7 @@
     state.files.forEach((f) => {
       const div = document.createElement('div');
       div.className = 'thumb';
+      div.dataset.id = f.id;
       div.innerHTML = f.kind === 'video'
         ? `<video src="${f.previewUrl}" muted></video>`
         : `<img src="${f.previewUrl}" />`;
@@ -280,48 +396,86 @@
         status.textContent = f.status === 'uploading' ? 'Subiendo...' : f.status === 'done' ? 'Listo' : 'Error';
         div.appendChild(status);
       }
+      const bar = document.createElement('div');
+      bar.className = 'progress-bar';
+      bar.style.width = `${f.status === 'done' ? 100 : f.progress || 0}%`;
+      div.appendChild(bar);
       grid.appendChild(div);
     });
   }
 
+  function updateThumbProgress(id, pct) {
+    const bar = document.querySelector(`.thumb[data-id="${id}"] .progress-bar`);
+    if (bar) bar.style.width = `${pct}%`;
+  }
+
   $('btnTakePhoto').addEventListener('click', () => $('cameraInput').click());
   $('btnPickGallery').addEventListener('click', () => $('galleryInput').click());
-  $('cameraInput').addEventListener('change', (e) => { addFiles(e.target.files, true); e.target.value = ''; });
-  $('galleryInput').addEventListener('change', (e) => { addFiles(e.target.files, false); e.target.value = ''; });
+  $('cameraInput').addEventListener('change', (e) => {
+    if (!currentGeo) {
+      toast('Espera a que se obtenga tu ubicacion antes de tomar la foto.');
+      e.target.value = '';
+      return;
+    }
+    addFiles(e.target.files);
+    e.target.value = '';
+  });
+  // "Elegir de galeria" no espera el GPS: si ya esta listo lo usa, si no, sube sin coordenadas
+  $('galleryInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
 
-  async function uploadOne(entry) {
-    const resourceType = entry.kind === 'video' ? 'video' : 'image';
-    const sig = await api('/upload-signature', {
-      method: 'POST',
-      body: JSON.stringify({ site_code: state.site.site_code, resource_type: resourceType })
+  function uploadOne(entry) {
+    return new Promise(async (resolve, reject) => {
+      const resourceType = entry.kind === 'video' ? 'video' : 'image';
+      let sig;
+      try {
+        sig = await api('/upload-signature', {
+          method: 'POST',
+          body: JSON.stringify({ site_code: state.site.site_code, resource_type: resourceType })
+        });
+      } catch (err) {
+        return reject(err);
+      }
+
+      const filename = entry.kind === 'video'
+        ? entry.file.name
+        : entry.file.name.replace(/\.\w+$/, '') + '.jpg';
+
+      const form = new FormData();
+      form.append('file', entry.blob, filename);
+      form.append('api_key', sig.apiKey);
+      form.append('timestamp', sig.timestamp);
+      form.append('signature', sig.signature);
+      form.append('folder', sig.folder);
+
+      // XMLHttpRequest en vez de fetch para poder mostrar progreso real de
+      // subida por archivo (barra de progreso en cada miniatura).
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${sig.cloudName}/${resourceType}/upload`);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          entry.progress = Math.round((e.loaded / e.total) * 100);
+          updateThumbProgress(entry.id, entry.progress);
+        }
+      };
+      xhr.onload = () => {
+        let data;
+        try { data = JSON.parse(xhr.responseText); } catch { data = {}; }
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve({
+            public_id: data.public_id,
+            secure_url: data.secure_url,
+            resource_type: resourceType,
+            gps_lat: entry.lat,
+            gps_lng: entry.lng,
+            gps_address: entry.address
+          });
+        } else {
+          reject(new Error(data.error?.message || 'Error subiendo archivo'));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Error de red subiendo archivo'));
+      xhr.send(form);
     });
-
-    const filename = entry.kind === 'video'
-      ? entry.file.name
-      : entry.file.name.replace(/\.\w+$/, '') + '.jpg';
-
-    const form = new FormData();
-    form.append('file', entry.blob, filename);
-    form.append('api_key', sig.apiKey);
-    form.append('timestamp', sig.timestamp);
-    form.append('signature', sig.signature);
-    form.append('folder', sig.folder);
-
-    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/${resourceType}/upload`, {
-      method: 'POST',
-      body: form
-    });
-    const uploadData = await uploadRes.json();
-    if (!uploadRes.ok) throw new Error(uploadData.error?.message || 'Error subiendo archivo');
-
-    return {
-      public_id: uploadData.public_id,
-      secure_url: uploadData.secure_url,
-      resource_type: resourceType,
-      gps_lat: entry.lat,
-      gps_lng: entry.lng,
-      gps_address: entry.address
-    };
   }
 
   $('btnSubmit').addEventListener('click', async () => {
@@ -372,12 +526,22 @@
     }
   });
 
-  $('btnNewJob').addEventListener('click', () => {
+  function startNewJob(sameSite) {
     state.files.forEach((f) => f.previewUrl && URL.revokeObjectURL(f.previewUrl));
     state.files = [];
-    state.employeeName = '';
-    $('employeeName').value = '';
     renderThumbs();
-    goToStep(2);
-  });
+    if (sameSite) {
+      goToStep(3);
+      requestLocation();
+    } else {
+      state.site = null;
+      state.employeeName = '';
+      $('employeeName').value = '';
+      $('siteCode').value = '';
+      $('siteConfirm').classList.add('hidden');
+      goToStep(1);
+    }
+  }
+  $('btnSameSite').addEventListener('click', () => startNewJob(true));
+  $('btnNewSite').addEventListener('click', () => startNewJob(false));
 })();

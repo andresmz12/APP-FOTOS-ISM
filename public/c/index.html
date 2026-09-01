@@ -43,8 +43,14 @@
         <label for="siteCode">Codigo de acceso</label>
         <input type="text" id="siteCode" inputmode="numeric" placeholder="Codigo de sitio o PIN de administrador" autocomplete="off" />
         <div class="error-msg" id="step1Error"></div>
+        <div class="site-confirm hidden" id="siteConfirm">
+          <div class="confirm-check">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M5 10.5l3 3 7-7.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="confirm-name" id="siteConfirmName"></div>
+        </div>
         <button class="btn btn-primary" id="btnCheckin">
-          <span>Continuar</span>
+          <span id="checkinLabel">Continuar</span>
           <svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
@@ -83,6 +89,11 @@
         <h2>Fotos y video</h2>
         <p class="hint">La ubicacion GPS es obligatoria al tomar fotos con camara y queda marcada en la imagen.</p>
 
+        <div class="geo-banner geo-loading" id="geoBanner">
+          <svg class="icon spin" viewBox="0 0 20 20" fill="none"><path d="M17 10a7 7 0 1 1-2.05-4.95" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span id="geoBannerText">Obteniendo tu ubicacion...</span>
+        </div>
+
         <div class="photo-actions">
           <button class="btn btn-primary" id="btnTakePhoto">
             <svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M3 7a1.5 1.5 0 0 1 1.5-1.5h1.44a1 1 0 0 0 .86-.5l.6-1a1 1 0 0 1 .86-.5h2.48a1 1 0 0 1 .86.5l.6 1a1 1 0 0 0 .86.5h1.44A1.5 1.5 0 0 1 17 7v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14.5V7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="10" cy="10.5" r="2.7" stroke="currentColor" stroke-width="1.6"/></svg>
@@ -116,7 +127,10 @@
         </div>
         <h2>Evidencia enviada</h2>
         <p class="hint" id="successSummary"></p>
-        <button class="btn btn-primary" id="btnNewJob" style="margin-top:14px">Registrar otro trabajo</button>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-secondary" id="btnNewSite">Otro sitio</button>
+          <button class="btn btn-primary" id="btnSameSite">Subir mas — mismo sitio</button>
+        </div>
       </div>
     </div>
   </div>

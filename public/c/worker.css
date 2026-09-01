@@ -34,3 +34,51 @@
 }
 .site-badge svg { color: var(--brand); margin-top: 2px; }
 .site-badge h2 { margin: 0; }
+
+/* --- Confirmacion visual antes de avanzar del paso 1 --- */
+.site-confirm {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--brand-soft); border-radius: var(--radius-sm);
+  padding: 12px 14px; margin-top: 10px;
+  animation: fadeIn .2s ease;
+}
+.site-confirm.hidden { display: none; }
+.confirm-check {
+  width: 24px; height: 24px; border-radius: 50%; background: var(--success); color: #fff;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.confirm-check svg { width: 13px; height: 13px; }
+.confirm-name { font-weight: 600; font-size: 14.5px; color: var(--brand); }
+
+/* --- Banner de estado de GPS, persistente en el paso de fotos --- */
+.geo-banner {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 11px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+  margin: 14px 0 4px;
+}
+.geo-banner .icon { flex-shrink: 0; }
+.geo-banner.geo-loading { background: var(--surface-alt); color: var(--ink-500); }
+.geo-banner.geo-ok { background: var(--success-bg); color: var(--success); }
+.geo-banner.geo-error { background: var(--danger-bg); color: var(--danger); }
+.geo-banner .geo-retry {
+  margin-left: auto; background: var(--danger); color: #fff; border: none; border-radius: 6px;
+  padding: 6px 12px; font-size: 12px; font-weight: 700; font-family: var(--font); cursor: pointer;
+}
+.icon.spin { animation: spin 1s linear infinite; }
+
+/* --- Barra de progreso por miniatura durante la subida --- */
+.thumb .progress-bar {
+  position: absolute; bottom: 0; left: 0; height: 4px; width: 0%;
+  background: var(--success); transition: width .2s ease;
+}
+
+/* --- Transiciones direccionales tipo app nativa entre pasos --- */
+.container { position: relative; overflow-x: hidden; }
+.step {
+  transition: transform .32s cubic-bezier(.4,0,.2,1), opacity .28s ease;
+}
+.step.anim-enter-fwd { transform: translateX(36px); opacity: 0; }
+.step.anim-enter-back { transform: translateX(-36px); opacity: 0; }
+.step.anim-exit-fwd { transform: translateX(-36px); opacity: 0; }
+.step.anim-exit-back { transform: translateX(36px); opacity: 0; }
+.step.anim-center { transform: translateX(0); opacity: 1; }
