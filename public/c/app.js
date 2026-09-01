@@ -468,8 +468,11 @@
       div.appendChild(remove);
       if (f.status !== 'ready') {
         const status = document.createElement('div');
-        status.className = 'status';
-        status.textContent = f.status === 'uploading' ? 'Subiendo...' : f.status === 'done' ? 'Listo' : 'Error';
+        status.className = 'status' + (f.status === 'local' ? ' status-warn' : '');
+        status.textContent = f.status === 'uploading' ? 'Subiendo...'
+          : f.status === 'done' ? 'Listo'
+          : f.status === 'local' ? 'Guardado en tu telefono'
+          : 'Error';
         div.appendChild(status);
       }
       const bar = document.createElement('div');
@@ -554,6 +557,23 @@
     });
   }
 
+  // Si la nube no responde (cuenta de Cloudinary mal configurada, sin
+  // internet, etc.), en vez de solo mostrar un error tecnico se descarga la
+  // foto/video directo al telefono del trabajador y se avisa claramente que
+  // NO quedo subida al sistema, para que la evidencia no se pierda.
+  function downloadLocally(entry) {
+    try {
+      const a = document.createElement('a');
+      a.href = entry.previewUrl;
+      a.download = entry.file.name || `evidencia-${entry.id}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('No se pudo guardar localmente:', err.message);
+    }
+  }
+
   $('btnSubmit').addEventListener('click', async () => {
     $('step3Error').textContent = '';
     if (!state.files.length) return ($('step3Error').textContent = 'Agrega al menos una foto o video');
@@ -561,38 +581,59 @@
     $('btnSubmit').disabled = true;
     $('submitLabel').innerHTML = '<span class="spinner"></span> Subiendo...';
 
-    try {
-      // Si ya se subieron algunas fotos en un intento previo, no se vuelven a subir.
-      for (const entry of state.files) {
-        if (entry.status === 'done' && entry.uploadedMedia) continue;
-        entry.status = 'uploading';
+    // Una vez que UNA subida falla, se asume que la nube no esta disponible
+    // y el resto de archivos pendientes se guardan localmente de una vez, en
+    // vez de hacerlos esperar cada uno su propio intento fallido.
+    let cloudFailed = false;
+
+    for (const entry of state.files) {
+      if (entry.status === 'done' && entry.uploadedMedia) continue;
+      if (entry.status === 'local') continue; // ya se guardo en el telefono, no se reintenta solo
+
+      if (cloudFailed) {
+        downloadLocally(entry);
+        entry.status = 'local';
         renderThumbs();
-        try {
-          entry.uploadedMedia = await uploadOne(entry);
-          entry.status = 'done';
-        } catch (err) {
-          entry.status = 'error';
-          renderThumbs();
-          throw err;
-        }
-        renderThumbs();
+        continue;
       }
 
-      const uploaded = state.files.map((f) => f.uploadedMedia).filter(Boolean);
+      entry.status = 'uploading';
+      renderThumbs();
+      try {
+        entry.uploadedMedia = await uploadOne(entry);
+        entry.status = 'done';
+      } catch (err) {
+        cloudFailed = true;
+        downloadLocally(entry);
+        entry.status = 'local';
+      }
+      renderThumbs();
+    }
 
-      await api('/jobs', {
-        method: 'POST',
-        body: JSON.stringify({
-          site_code: state.site.site_code,
-          employee_name: state.employeeName,
-          job_type: state.jobType,
-          media: uploaded
-        })
-      });
+    const uploaded = state.files.map((f) => f.uploadedMedia).filter(Boolean);
+    const localCount = state.files.filter((f) => f.status === 'local').length;
 
-      state.files.forEach((f) => URL.revokeObjectURL(f.previewUrl));
-      $('successSummary').textContent = `${uploaded.length} archivo(s) enviados para ${state.site.name}.`;
-      goToStep(4);
+    try {
+      if (uploaded.length) {
+        await api('/jobs', {
+          method: 'POST',
+          body: JSON.stringify({
+            site_code: state.site.site_code,
+            employee_name: state.employeeName,
+            job_type: state.jobType,
+            media: uploaded
+          })
+        });
+      }
+
+      if (cloudFailed) {
+        $('step3Error').textContent = `No se pudo conectar con la nube: ${localCount} archivo(s) se guardaron en tu telefono pero NO quedaron en el sistema. Avisa a tu administrador y, cuando haya conexion, vuelve a intentar subirlas desde "Galeria".`;
+        toast('No se pudo subir a la nube. Se guardo en tu telefono.', true);
+      } else {
+        state.files.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+        $('successSummary').textContent = `${uploaded.length} archivo(s) enviados para ${state.site.name}.`;
+        goToStep(4);
+      }
     } catch (err) {
       $('step3Error').textContent = `${err.message}. Toca "Enviar evidencia" para reintentar; lo ya subido no se duplicara.`;
       toast(err.message, true);

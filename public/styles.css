@@ -175,6 +175,7 @@ input:focus, select:focus {
   background: rgba(15,23,21,.68); color: #fff; font-size: 10.5px; font-weight: 600; text-align: center; padding: 4px 0;
   letter-spacing: 0.02em;
 }
+.thumb .status.status-warn { background: rgba(184, 124, 21, .88); }
 
 .spinner {
   width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.35);
