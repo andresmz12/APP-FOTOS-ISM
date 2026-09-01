@@ -66,6 +66,20 @@ public/
 4. El `Procfile` incluye una fase `release: npm run migrate` que aplica el schema en cada deploy, y `web: node server.js` para levantar el servidor.
 5. Una vez desplegado, entra a `https://tu-app.up.railway.app/admin` con `PLATFORM_ADMIN_PASSWORD` y crea tu primera empresa. La URL del trabajador queda en `/c/<slug>` y la de galeria en `/c/<slug>/galeria`, disponibles de inmediato sin redeploy.
 
+### Si el sitio muestra "Cannot GET /" o no refleja tus ultimos cambios
+
+Railway despliega desde una rama especifica del repo, no siempre desde la que estas
+usando. En este repositorio el trabajo vive en la rama `claude/fieldproof-saas-multitenant-akand9`
+(no hay rama `main`). Revisa en el dashboard de Railway, pestana **Settings → Source**
+del servicio, que:
+
+- La rama conectada sea exactamente la que contiene tus commits.
+- **Auto-deploy** este activado, para que cada `git push` dispare un nuevo deploy.
+
+Si acabas de corregir la rama o activar el auto-deploy, Railway no redespliega
+retroactivamente los commits que ya existian: necesitas un push nuevo (o el boton
+**Deploy** manual en la pestana **Deployments**) para que tome el codigo actual.
+
 ## Flujo de uso
 
 - **Trabajador**: entra a `/c/<slug>`, escribe el codigo de su sitio, elige tipo de trabajo (Rutina/Proyecto), toma fotos (GPS obligatorio) o las elige de galeria (GPS opcional), y las envia. Cada foto queda con el sello de sitio/direccion/fecha quemado en la esquina inferior.
