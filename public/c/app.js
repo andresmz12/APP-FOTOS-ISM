@@ -112,25 +112,60 @@
     });
   }
 
+  // Construye una direccion corta y legible a partir de los componentes de Nominatim
+  // en vez de usar display_name completo (que puede tener 100+ caracteres y desbordar el sello).
+  function shortAddress(addr, fallback) {
+    if (!addr) return fallback || null;
+    const street = [addr.road, addr.house_number].filter(Boolean).join(' ');
+    const locality = addr.suburb || addr.neighbourhood || addr.city_district || '';
+    const city = addr.city || addr.town || addr.village || addr.municipality || '';
+    const state = addr.state || '';
+    const parts = [...new Set([street, locality, city, state].filter(Boolean))];
+    return parts.slice(0, 3).join(', ') || fallback || null;
+  }
+
   async function reverseGeocodeClient(lat, lng) {
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
       const data = await res.json();
-      return data.display_name || null;
+      return shortAddress(data.address, data.display_name);
     } catch {
       return null;
     }
   }
 
+  // Recorta el texto con "..." si no cabe en el ancho disponible del sello
+  function truncateToWidth(ctx, text, maxWidth) {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(t + '…').width > maxWidth) {
+      t = t.slice(0, -1);
+    }
+    return t + '…';
+  }
+
+  const MAX_PHOTO_DIMENSION = 2200; // limita el lado mayor para subidas rapidas y confiables en campo
+
   function stampImage(file, { lat, lng, address }) {
     return new Promise((resolve, reject) => {
       const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
       img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+
+        let width = img.naturalWidth;
+        let height = img.naturalHeight;
+        if (Math.max(width, height) > MAX_PHOTO_DIMENSION) {
+          const scale = MAX_PHOTO_DIMENSION / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+
         const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, width, height);
 
         const lines = [
           state.site.name,
@@ -138,24 +173,26 @@
           new Date().toLocaleString('es-MX')
         ];
 
-        const pad = Math.round(img.width * 0.02);
-        const lineHeight = Math.round(img.width * 0.028);
-        const fontSize = Math.round(img.width * 0.022);
+        const pad = Math.round(width * 0.02);
+        const lineHeight = Math.round(width * 0.028);
+        const fontSize = Math.round(width * 0.022);
         const boxHeight = lineHeight * lines.length + pad;
 
         ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(0, img.height - boxHeight, img.width, boxHeight);
+        ctx.fillRect(0, height - boxHeight, width, boxHeight);
 
         ctx.fillStyle = '#fff';
         ctx.font = `600 ${fontSize}px sans-serif`;
+        const maxTextWidth = width - pad * 2;
         lines.forEach((line, i) => {
-          ctx.fillText(line, pad, img.height - boxHeight + pad / 2 + lineHeight * (i + 1) - lineHeight * 0.3);
+          const text = truncateToWidth(ctx, line, maxTextWidth);
+          ctx.fillText(text, pad, height - boxHeight + pad / 2 + lineHeight * (i + 1) - lineHeight * 0.3);
         });
 
         canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9);
       };
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('No se pudo procesar la foto')); };
+      img.src = objectUrl;
     });
   }
 
@@ -212,6 +249,7 @@
       remove.className = 'remove';
       remove.textContent = '✕';
       remove.onclick = () => {
+        URL.revokeObjectURL(f.previewUrl);
         state.files = state.files.filter((x) => x.id !== f.id);
         renderThumbs();
       };
@@ -238,8 +276,12 @@
       body: JSON.stringify({ site_code: state.site.site_code, resource_type: resourceType })
     });
 
+    const filename = entry.kind === 'video'
+      ? entry.file.name
+      : entry.file.name.replace(/\.\w+$/, '') + '.jpg';
+
     const form = new FormData();
-    form.append('file', entry.blob, entry.file.name);
+    form.append('file', entry.blob, filename);
     form.append('api_key', sig.apiKey);
     form.append('timestamp', sig.timestamp);
     form.append('signature', sig.signature);
@@ -270,14 +312,14 @@
     $('submitLabel').innerHTML = '<span class="spinner"></span> Subiendo...';
 
     try {
-      const uploaded = [];
+      // Si ya se subieron algunas fotos en un intento previo, no se vuelven a subir.
       for (const entry of state.files) {
+        if (entry.status === 'done' && entry.uploadedMedia) continue;
         entry.status = 'uploading';
         renderThumbs();
         try {
-          const media = await uploadOne(entry);
+          entry.uploadedMedia = await uploadOne(entry);
           entry.status = 'done';
-          uploaded.push(media);
         } catch (err) {
           entry.status = 'error';
           renderThumbs();
@@ -285,6 +327,8 @@
         }
         renderThumbs();
       }
+
+      const uploaded = state.files.map((f) => f.uploadedMedia).filter(Boolean);
 
       await api('/jobs', {
         method: 'POST',
@@ -296,10 +340,11 @@
         })
       });
 
+      state.files.forEach((f) => URL.revokeObjectURL(f.previewUrl));
       $('successSummary').textContent = `${uploaded.length} archivo(s) enviados para ${state.site.name}.`;
       goToStep(4);
     } catch (err) {
-      $('step3Error').textContent = err.message;
+      $('step3Error').textContent = `${err.message}. Toca "Enviar evidencia" para reintentar; lo ya subido no se duplicara.`;
       toast(err.message, true);
     } finally {
       $('btnSubmit').disabled = false;
@@ -308,6 +353,7 @@
   });
 
   $('btnNewJob').addEventListener('click', () => {
+    state.files.forEach((f) => f.previewUrl && URL.revokeObjectURL(f.previewUrl));
     state.files = [];
     state.employeeName = '';
     $('employeeName').value = '';

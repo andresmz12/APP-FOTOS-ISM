@@ -7,6 +7,12 @@ const publicRoutes = require('./src/routes/public');
 const mediaRoutes = require('./src/routes/media');
 const adminRoutes = require('./src/routes/admin');
 
+const REQUIRED_ENV = ['DATABASE_URL', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'PLATFORM_ADMIN_PASSWORD'];
+const missingEnv = REQUIRED_ENV.filter((key) => !process.env[key]);
+if (missingEnv.length) {
+  console.warn(`ADVERTENCIA: faltan variables de entorno: ${missingEnv.join(', ')}. La subida de fotos y otras funciones fallaran hasta configurarlas.`);
+}
+
 const app = express();
 
 app.use(cors());
