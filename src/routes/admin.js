@@ -6,6 +6,7 @@ const pool = require('../db/pool');
 const asyncHandler = require('../utils/asyncHandler');
 const { requirePlatformAuth } = require('../middleware/platformAuth');
 const { sign } = require('../utils/token');
+const { destroyAsset } = require('../services/cloudinary');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
@@ -264,6 +265,49 @@ router.patch('/sites/:id', asyncHandler(async (req, res) => {
   if (!rows.length) return res.status(404).json({ error: 'Sitio no encontrado' });
 
   res.json({ site: rows[0] });
+}));
+
+// Borra en Cloudinary todas las fotos/videos de los sitios dados, antes de
+// borrar los sitios (el borrado en cascada de la base de datos se encarga
+// de las filas de jobs/media, pero no de los archivos reales en Cloudinary).
+async function destroySitesMedia(siteIds) {
+  if (!siteIds.length) return;
+  const { rows } = await pool.query(
+    `select m.cloudinary_public_id, m.resource_type
+     from media m
+     join jobs j on j.id = m.job_id
+     where j.site_id = any($1)`,
+    [siteIds]
+  );
+  for (const m of rows) {
+    try {
+      await destroyAsset(m.cloudinary_public_id, m.resource_type);
+    } catch (err) {
+      console.error('Error borrando asset de Cloudinary al eliminar sitio:', err.message);
+    }
+  }
+}
+
+// DELETE /api/admin/sites/:id -> borrado permanente de un sitio (y sus fotos)
+router.delete('/sites/:id', asyncHandler(async (req, res) => {
+  const siteId = Number(req.params.id);
+  await destroySitesMedia([siteId]);
+  const { rows } = await pool.query('delete from sites where id = $1 returning id', [siteId]);
+  if (!rows.length) return res.status(404).json({ error: 'Sitio no encontrado' });
+  res.json({ deleted: true });
+}));
+
+// POST /api/admin/companies/:id/sites/delete-batch -> borrado permanente en lote
+router.post('/companies/:id/sites/delete-batch', asyncHandler(async (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
+  if (!ids.length) return res.status(400).json({ error: 'Sin ids' });
+
+  await destroySitesMedia(ids);
+  const { rows } = await pool.query(
+    'delete from sites where id = any($1) and company_id = $2 returning id',
+    [ids, req.params.id]
+  );
+  res.json({ deleted: rows.length });
 }));
 
 module.exports = router;

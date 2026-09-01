@@ -105,3 +105,35 @@ body { background: var(--bg); }
 }
 .link-row a:hover { text-decoration: underline; }
 .link-row .btn { width: auto; padding: 8px 14px; font-size: 12.5px; flex-shrink: 0; }
+
+.sites-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+.sites-toolbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sites-toolbar-actions input[type=text] {
+  padding: 8px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-family: var(--font); font-size: 13px; min-width: 200px;
+}
+.sites-toolbar-actions .count-badge { background: var(--brand-soft); color: var(--brand); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.sites-table .row-checkbox { cursor: pointer; }
+.sites-table button[data-delete-site] {
+  background: var(--danger-bg); border: 1px solid transparent; color: var(--danger);
+  padding: 6px 12px; font-size: 12px; border-radius: 7px; cursor: pointer; font-family: var(--font); font-weight: 600;
+  margin-left: 6px;
+}
+.sites-table button[data-delete-site]:hover { filter: brightness(0.96); }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,23,21,.6); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+}
+.modal {
+  background: var(--surface); border-radius: var(--radius-lg); max-width: 420px; width: 100%; padding: 26px;
+  box-shadow: var(--shadow-md); text-align: center;
+}
+.modal-icon {
+  width: 48px; height: 48px; border-radius: 50%; background: var(--danger-bg); color: var(--danger);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;
+}
+.modal-icon svg { width: 22px; height: 22px; }
+.modal h3 { margin: 0 0 6px; font-size: 17px; }
+.modal p { color: var(--ink-500); font-size: 14px; margin: 0; }
+.modal .btn-row { margin-top: 20px; }

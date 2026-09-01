@@ -3,6 +3,8 @@
   let token = sessionStorage.getItem('fp-admin-token');
   let companies = [];
   let currentCompany = null;
+  let allSites = [];
+  let selectedSiteIds = new Set();
 
   function toast(msg, isError) {
     const el = document.createElement('div');
@@ -209,13 +211,31 @@
 
   async function loadSites() {
     const { sites } = await api(`/companies/${currentCompany.id}/sites`);
-    $('sitesBody').innerHTML = sites.map((s) => `
+    allSites = sites;
+    selectedSiteIds.clear();
+    renderSites();
+  }
+
+  function renderSites() {
+    const q = $('siteSearch').value.trim().toLowerCase();
+    const filtered = q
+      ? allSites.filter((s) => s.site_code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || (s.address || '').toLowerCase().includes(q))
+      : allSites;
+
+    $('sitesCount').textContent = `${filtered.length} sitio(s)`;
+    $('emptySites').style.display = filtered.length ? 'none' : 'block';
+
+    $('sitesBody').innerHTML = filtered.map((s) => `
       <tr>
+        <td><input type="checkbox" class="row-checkbox" data-site-id="${s.id}" ${selectedSiteIds.has(s.id) ? 'checked' : ''} /></td>
         <td>${s.site_code}</td>
         <td>${s.name}</td>
         <td>${s.address || '-'}</td>
         <td>${s.active ? 'Si' : 'No'}</td>
-        <td><button class="btn btn-secondary" data-toggle="${s.id}" data-active="${s.active}" style="width:auto;padding:6px 12px;font-size:12px">${s.active ? 'Desactivar' : 'Activar'}</button></td>
+        <td>
+          <button class="btn btn-secondary" data-toggle="${s.id}" data-active="${s.active}" style="width:auto;padding:6px 12px;font-size:12px">${s.active ? 'Desactivar' : 'Activar'}</button>
+          <button data-delete-site="${s.id}">Eliminar</button>
+        </td>
       </tr>
     `).join('');
 
@@ -226,7 +246,67 @@
         await loadSites();
       });
     });
+
+    document.querySelectorAll('.row-checkbox').forEach((cb) => {
+      cb.addEventListener('change', () => {
+        const id = Number(cb.dataset.siteId);
+        if (cb.checked) selectedSiteIds.add(id); else selectedSiteIds.delete(id);
+        $('btnDeleteSelectedSites').style.display = selectedSiteIds.size ? 'inline-flex' : 'none';
+      });
+    });
+
+    document.querySelectorAll('[data-delete-site]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const site = allSites.find((s) => s.id === Number(btn.dataset.deleteSite));
+        openDeleteSitesConfirm([site.id], `Vas a eliminar permanentemente el sitio "${site.name}" (${site.site_code}) y todas sus fotos/videos. Esta accion no se puede deshacer.`);
+      });
+    });
+
+    $('btnDeleteSelectedSites').style.display = selectedSiteIds.size ? 'inline-flex' : 'none';
   }
+
+  $('siteSearch').addEventListener('input', renderSites);
+
+  $('btnSelectAllSites').addEventListener('click', () => {
+    const q = $('siteSearch').value.trim().toLowerCase();
+    const filtered = q
+      ? allSites.filter((s) => s.site_code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || (s.address || '').toLowerCase().includes(q))
+      : allSites;
+    const allSelected = filtered.length > 0 && filtered.every((s) => selectedSiteIds.has(s.id));
+    if (allSelected) {
+      filtered.forEach((s) => selectedSiteIds.delete(s.id));
+    } else {
+      filtered.forEach((s) => selectedSiteIds.add(s.id));
+    }
+    renderSites();
+  });
+
+  let pendingDeleteSiteIds = [];
+  function openDeleteSitesConfirm(ids, message) {
+    pendingDeleteSiteIds = ids;
+    $('confirmDeleteSitesText').textContent = message;
+    $('confirmDeleteSitesModal').style.display = 'flex';
+  }
+  $('btnDeleteSelectedSites').addEventListener('click', () => {
+    const ids = [...selectedSiteIds];
+    openDeleteSitesConfirm(ids, `Vas a eliminar permanentemente ${ids.length} sitio(s) y todas sus fotos/videos. Esta accion no se puede deshacer.`);
+  });
+  $('btnCancelDeleteSites').addEventListener('click', () => { $('confirmDeleteSitesModal').style.display = 'none'; });
+  $('btnConfirmDeleteSites').addEventListener('click', async () => {
+    $('confirmDeleteSitesModal').style.display = 'none';
+    try {
+      if (pendingDeleteSiteIds.length === 1) {
+        await api(`/sites/${pendingDeleteSiteIds[0]}`, { method: 'DELETE' });
+      } else {
+        await api(`/companies/${currentCompany.id}/sites/delete-batch`, { method: 'POST', body: JSON.stringify({ ids: pendingDeleteSiteIds }) });
+      }
+      toast(`${pendingDeleteSiteIds.length} sitio(s) eliminados`);
+      await loadSites();
+      await loadCompanies();
+    } catch (err) {
+      toast(err.message, true);
+    }
+  });
 
   $('btnAddSite').addEventListener('click', async () => {
     $('siteError').textContent = '';

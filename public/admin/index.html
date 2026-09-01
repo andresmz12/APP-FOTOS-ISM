@@ -112,13 +112,22 @@
         </div>
 
         <div class="detail-panel">
-          <h3>Sitios</h3>
+          <div class="sites-toolbar">
+            <h3 style="margin:0">Sitios</h3>
+            <div class="sites-toolbar-actions">
+              <input type="text" id="siteSearch" placeholder="Buscar por codigo o nombre..." />
+              <span class="count-badge" id="sitesCount">0 sitios</span>
+              <button class="btn btn-secondary" id="btnSelectAllSites" style="width:auto;padding:8px 14px;font-size:12.5px">Seleccionar todo</button>
+              <button class="btn btn-danger" id="btnDeleteSelectedSites" style="width:auto;padding:8px 14px;font-size:12.5px;display:none">Eliminar seleccionados</button>
+            </div>
+          </div>
           <div class="table-wrap">
             <table class="sites-table">
-              <thead><tr><th>Codigo</th><th>Nombre</th><th>Direccion</th><th>Activo</th><th></th></tr></thead>
+              <thead><tr><th style="width:32px"></th><th>Codigo</th><th>Nombre</th><th>Direccion</th><th>Activo</th><th></th></tr></thead>
               <tbody id="sitesBody"></tbody>
             </table>
           </div>
+          <div class="empty-companies" id="emptySites" style="display:none">No hay sitios que coincidan con la busqueda.</div>
           <div class="inline-form">
             <input id="newSiteCode" placeholder="Codigo de sitio" />
             <input id="newSiteName" placeholder="Nombre del sitio" />
@@ -138,6 +147,18 @@
             <div id="bulkResult"></div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmDeleteSitesModal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M9 6V4.5a1.5 1.5 0 0 1 1.5-1.5h3a1.5 1.5 0 0 1 1.5 1.5V6m-9 0 .9 12.4A2 2 0 0 0 9.4 20h5.2a2 2 0 0 0 2-1.6L18.5 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>Eliminar permanentemente</h3>
+      <p id="confirmDeleteSitesText">Esta accion no se puede deshacer.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="btnCancelDeleteSites">Cancelar</button>
+        <button class="btn btn-danger" id="btnConfirmDeleteSites">Si, eliminar</button>
       </div>
     </div>
   </div>
