@@ -40,8 +40,12 @@
       <div class="card">
         <h2>Ingresa tu codigo de acceso</h2>
         <p class="hint">El mismo enlace sirve para todos: el codigo de tu sitio te lleva a subir fotos, el PIN de administrador te lleva a la galeria.</p>
-        <label for="siteCode">Codigo de acceso</label>
-        <input type="text" id="siteCode" inputmode="numeric" placeholder="Codigo de sitio o PIN de administrador" autocomplete="off" />
+
+        <div class="code-display-box">
+          <input type="text" id="siteCode" inputmode="numeric" maxlength="8" placeholder="0000" readonly />
+        </div>
+        <div class="keypad" id="keypad"></div>
+
         <div class="error-msg" id="step1Error"></div>
         <div class="site-confirm hidden" id="siteConfirm">
           <div class="confirm-check">
@@ -49,10 +53,6 @@
           </div>
           <div class="confirm-name" id="siteConfirmName"></div>
         </div>
-        <button class="btn btn-primary" id="btnCheckin">
-          <span id="checkinLabel">Continuar</span>
-          <svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
       </div>
     </div>
 

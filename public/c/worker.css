@@ -35,6 +35,31 @@
 .site-badge svg { color: var(--brand); margin-top: 2px; }
 .site-badge h2 { margin: 0; }
 
+/* --- Teclado numerico del paso 1 --- */
+.code-display-box { display: flex; justify-content: center; margin: 18px 0 4px; }
+.code-display-box input {
+  width: 100%; max-width: 220px; text-align: center; font-family: var(--font);
+  font-size: 30px; letter-spacing: 0.15em; font-weight: 700; color: var(--brand);
+  padding: 12px 10px; border: 2px solid var(--border); border-radius: var(--radius-md);
+  background: var(--surface); caret-color: transparent;
+}
+.code-display-box input:focus { outline: none; border-color: var(--brand); box-shadow: none; }
+.code-display-box input::placeholder { color: var(--ink-300); font-weight: 600; }
+
+.keypad {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  max-width: 300px; margin: 16px auto 0;
+}
+.keypad button {
+  aspect-ratio: 1; border-radius: var(--radius-md); border: 1.5px solid var(--border);
+  background: var(--surface); font-family: var(--font); font-size: 22px; font-weight: 700;
+  color: var(--ink-900); cursor: pointer; transition: background .1s ease, transform .08s ease;
+}
+.keypad button:active { background: var(--surface-alt); transform: scale(0.94); }
+.keypad button.ghost { background: transparent; border: none; color: var(--ink-500); }
+.keypad button.ghost svg { width: 22px; height: 22px; }
+.keypad button:disabled { visibility: hidden; }
+
 /* --- Confirmacion visual antes de avanzar del paso 1 --- */
 .site-confirm {
   display: flex; align-items: center; gap: 10px;

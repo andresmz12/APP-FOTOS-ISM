@@ -121,7 +121,7 @@
       if (c.logoUrl) $('logo').src = c.logoUrl;
       if (c.status !== 'active') {
         $('suspendedBanner').style.display = 'block';
-        $('btnCheckin').disabled = true;
+        document.querySelectorAll('#keypad button').forEach((b) => { b.disabled = true; });
       }
     } catch (err) {
       $('companyName').textContent = 'Empresa no encontrada';
@@ -130,23 +130,69 @@
   }
   loadCompany();
 
-  // --- Paso 1: un solo codigo. Si es el PIN de admin, se manda directo a la
+  // --- Paso 1: teclado numerico con deteccion en vivo. Sin boton "Continuar":
+  // en cuanto el codigo escrito coincide con un sitio o con el admin_pin de
+  // la empresa, avanza solo. Si es el PIN de admin, se manda directo a la
   // galeria (guardando la credencial para que no tenga que volver a escribirla).
-  // Si es un codigo de sitio, muestra una confirmacion breve y sigue al paso 2.
-  $('btnCheckin').addEventListener('click', async () => {
-    const code = $('siteCode').value.trim();
+  let codeBuffer = '';
+  let codeCheckTimer = null;
+  let codeResolved = false;
+
+  function buildKeypad() {
+    const kp = $('keypad');
+    kp.innerHTML = '';
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'];
+    keys.forEach((k) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      if (k === '') {
+        btn.className = 'ghost';
+        btn.disabled = true;
+      } else if (k === 'back') {
+        btn.className = 'ghost';
+        btn.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M8 5H16a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8l-5-5 5-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M11 8.5l3 3m0-3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+        btn.addEventListener('click', () => codePress('back'));
+      } else {
+        btn.textContent = k;
+        btn.addEventListener('click', () => codePress(k));
+      }
+      kp.appendChild(btn);
+    });
+  }
+  buildKeypad();
+
+  function renderCodeDisplay() {
+    $('siteCode').value = codeBuffer;
+  }
+
+  function codePress(k) {
+    if (codeResolved) return; // ya se encontro coincidencia, esperando avanzar/redirigir
+    if (k === 'back') {
+      codeBuffer = codeBuffer.slice(0, -1);
+    } else if (codeBuffer.length < 8) {
+      codeBuffer += k;
+    }
+    renderCodeDisplay();
     $('step1Error').textContent = '';
     $('siteConfirm').classList.add('hidden');
-    if (!code) return ($('step1Error').textContent = 'Escribe tu codigo de acceso');
 
-    $('btnCheckin').disabled = true;
+    clearTimeout(codeCheckTimer);
+    if (codeBuffer.length >= 2) {
+      codeCheckTimer = setTimeout(() => checkCode(codeBuffer), 300);
+    }
+  }
+
+  async function checkCode(code) {
     try {
       const result = await api('/resolve-code', { method: 'POST', body: JSON.stringify({ code }) });
+      if (code !== codeBuffer) return; // el usuario siguio escribiendo mientras se resolvia
+      codeResolved = true;
 
       if (result.role === 'admin') {
-        $('checkinLabel').textContent = 'Entrando como administrador...';
         sessionStorage.setItem(`fp-cred-${slug}`, JSON.stringify({ param: 'admin_pin', value: code }));
-        location.href = `/c/${slug}/galeria`;
+        $('siteConfirmName').textContent = 'Entrando como administrador...';
+        $('siteConfirm').classList.remove('hidden');
+        setTimeout(() => { location.href = `/c/${slug}/galeria`; }, 400);
         return;
       }
 
@@ -157,15 +203,15 @@
 
       $('siteConfirmName').textContent = site.name;
       $('siteConfirm').classList.remove('hidden');
-      await new Promise((r) => setTimeout(r, 450));
-      goToStep(2);
+      setTimeout(() => goToStep(2), 450);
     } catch (err) {
-      $('step1Error').textContent = err.message;
-    } finally {
-      $('btnCheckin').disabled = false;
-      $('checkinLabel').textContent = 'Continuar';
+      // codigo aun incompleto o invalido: no se muestra error mientras se sigue
+      // escribiendo, solo si ya se alcanzo el largo maximo sin coincidencia
+      if (code === codeBuffer && codeBuffer.length >= 8) {
+        $('step1Error').textContent = 'Codigo no reconocido';
+      }
     }
-  });
+  }
 
   // --- Paso 2: detalles ---
   document.querySelectorAll('.job-type-option').forEach((el) => {
@@ -175,7 +221,14 @@
       state.jobType = el.dataset.value;
     });
   });
-  $('btnBackTo1').addEventListener('click', () => goToStep(1));
+  $('btnBackTo1').addEventListener('click', () => {
+    codeBuffer = '';
+    codeResolved = false;
+    clearTimeout(codeCheckTimer);
+    renderCodeDisplay();
+    $('siteConfirm').classList.add('hidden');
+    goToStep(1);
+  });
   $('btnToStep3').addEventListener('click', () => {
     state.employeeName = $('employeeName').value.trim();
     goToStep(3);
@@ -537,7 +590,10 @@
       state.site = null;
       state.employeeName = '';
       $('employeeName').value = '';
-      $('siteCode').value = '';
+      codeBuffer = '';
+      codeResolved = false;
+      clearTimeout(codeCheckTimer);
+      renderCodeDisplay();
       $('siteConfirm').classList.add('hidden');
       goToStep(1);
     }
