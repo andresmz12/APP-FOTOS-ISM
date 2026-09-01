@@ -163,14 +163,11 @@
   function buildKeypad() {
     const kp = $('keypad');
     kp.innerHTML = '';
-    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'];
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '#', '0', 'back'];
     keys.forEach((k) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      if (k === '') {
-        btn.className = 'ghost';
-        btn.disabled = true;
-      } else if (k === 'back') {
+      if (k === 'back') {
         btn.className = 'ghost';
         btn.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M8 5H16a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8l-5-5 5-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M11 8.5l3 3m0-3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
         btn.addEventListener('click', () => codePress('back'));
@@ -218,8 +215,12 @@
         return;
       }
 
+      // Se usa site.site_code (el valor real guardado, ej. "#2160") y no lo
+      // que el trabajador escribio en el teclado (podria faltarle el "#"),
+      // para que las llamadas siguientes (firma de subida, registro del
+      // trabajo) coincidan exacto con lo que espera el backend.
       const { site } = result;
-      state.site = { ...site, site_code: code };
+      state.site = { ...site };
       $('siteNameDisplay').textContent = site.name;
       $('siteAddressDisplay').textContent = site.address || '';
 

@@ -30,9 +30,13 @@ router.post('/:slug/resolve-code', resolveCompany, requireActiveCompany, asyncHa
     return res.json({ role: 'admin' });
   }
 
+  // Tolerante a un "#" inicial de mas o de menos: algunos archivos de carga
+  // masiva traen los codigos con # (ej. "#2160") y el teclado del trabajador
+  // puede o no incluirlo, asi que se prueban ambas variantes.
+  const altCode = code.startsWith('#') ? code.slice(1) : `#${code}`;
   const { rows } = await pool.query(
-    'select id, name, address from sites where company_id = $1 and site_code = $2 and active = true',
-    [req.company.id, code]
+    'select id, site_code, name, address from sites where company_id = $1 and active = true and site_code in ($2, $3)',
+    [req.company.id, code, altCode]
   );
   if (rows.length) {
     return res.json({ role: 'site', site: rows[0] });
