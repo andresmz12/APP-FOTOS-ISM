@@ -74,15 +74,25 @@
   }
   loadCompany();
 
-  // --- Paso 1: checkin ---
+  // --- Paso 1: un solo codigo. Si es el PIN de admin, se manda directo a la
+  // galeria (guardando la credencial para que no tenga que volver a escribirla).
+  // Si es un codigo de sitio, sigue el flujo normal de subir evidencia.
   $('btnCheckin').addEventListener('click', async () => {
     const code = $('siteCode').value.trim();
     $('step1Error').textContent = '';
-    if (!code) return ($('step1Error').textContent = 'Escribe el codigo de tu sitio');
+    if (!code) return ($('step1Error').textContent = 'Escribe tu codigo de acceso');
 
     $('btnCheckin').disabled = true;
     try {
-      const { site } = await api('/checkin', { method: 'POST', body: JSON.stringify({ site_code: code }) });
+      const result = await api('/resolve-code', { method: 'POST', body: JSON.stringify({ code }) });
+
+      if (result.role === 'admin') {
+        sessionStorage.setItem(`fp-cred-${slug}`, JSON.stringify({ param: 'admin_pin', value: code }));
+        location.href = `/c/${slug}/galeria`;
+        return;
+      }
+
+      const { site } = result;
       state.site = { ...site, site_code: code };
       $('siteNameDisplay').textContent = site.name;
       $('siteAddressDisplay').textContent = site.address || '';

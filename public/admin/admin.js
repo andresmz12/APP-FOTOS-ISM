@@ -145,22 +145,15 @@
   }
 
   function renderPublicUrls(slug) {
-    const worker = `${location.origin}/c/${slug}`;
-    const gallery = `${location.origin}/c/${slug}/galeria`;
+    const url = `${location.origin}/c/${slug}`;
     $('dPublicUrls').innerHTML = `
       <div class="link-row">
         <div>
-          <span class="link-label">Enlace para trabajadores</span>
-          <a href="${worker}" target="_blank" rel="noopener">${worker}</a>
+          <span class="link-label">Enlace unico de esta empresa</span>
+          <a href="${url}" target="_blank" rel="noopener">${url}</a>
+          <p class="link-note">Compartelo con todos: cada quien entra con su propio codigo. El codigo de un sitio lleva a subir fotos; el PIN de administrador lleva directo a la galeria.</p>
         </div>
-        <button class="btn btn-secondary" data-copy="${worker}">Copiar</button>
-      </div>
-      <div class="link-row">
-        <div>
-          <span class="link-label">Enlace de galeria (admin de la empresa)</span>
-          <a href="${gallery}" target="_blank" rel="noopener">${gallery}</a>
-        </div>
-        <button class="btn btn-secondary" data-copy="${gallery}">Copiar</button>
+        <button class="btn btn-secondary" data-copy="${url}">Copiar</button>
       </div>
     `;
     $('dPublicUrls').querySelectorAll('[data-copy]').forEach((btn) => {

@@ -21,6 +21,26 @@ router.get('/:slug', resolveCompany, (req, res) => {
   });
 });
 
+// POST /api/companies/:slug/resolve-code -> un solo codigo, decide si es de sitio (trabajador) o admin_pin (galeria)
+router.post('/:slug/resolve-code', resolveCompany, requireActiveCompany, asyncHandler(async (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ error: 'Escribe un codigo' });
+
+  if (code === req.company.admin_pin) {
+    return res.json({ role: 'admin' });
+  }
+
+  const { rows } = await pool.query(
+    'select id, name, address from sites where company_id = $1 and site_code = $2 and active = true',
+    [req.company.id, code]
+  );
+  if (rows.length) {
+    return res.json({ role: 'site', site: rows[0] });
+  }
+
+  return res.status(404).json({ error: 'Codigo invalido' });
+}));
+
 // POST /api/companies/:slug/checkin -> valida codigo de sitio
 router.post('/:slug/checkin', resolveCompany, requireActiveCompany, asyncHandler(async (req, res) => {
   const { site_code } = req.body;
@@ -101,7 +121,7 @@ router.post('/:slug/jobs', resolveCompany, requireActiveCompany, asyncHandler(as
     employeeName: employee_name,
     jobType,
     media: insertedMedia,
-    appUrl: `${process.env.PUBLIC_APP_URL || ''}/c/${req.company.slug}/galeria`
+    appUrl: `${process.env.PUBLIC_APP_URL || ''}/c/${req.company.slug}`
   }).catch((err) => console.error('Error enviando correo de aviso:', err.message));
 
   res.status(201).json({ job_id: jobId, media_count: insertedMedia.length });
