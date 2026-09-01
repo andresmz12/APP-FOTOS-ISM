@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Galeria - FieldProof</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#17322B" />
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/c/gallery.css" />
+</head>
+<body>
+  <div class="topbar" id="topbar">
+    <img id="logo" class="logo" src="/icons/icon-192.png" alt="" />
+    <h1 id="companyName">Galeria</h1>
+  </div>
+
+  <div class="gallery-container">
+
+    <!-- Login por codigo -->
+    <div id="loginView" class="card login-card">
+      <h2>Ingresar a la galeria</h2>
+      <label for="accessCode">Codigo de sitio o PIN de administrador</label>
+      <input type="text" id="accessCode" placeholder="Escribe tu codigo" autocomplete="off" />
+      <div class="error-msg" id="loginError"></div>
+      <button class="btn btn-primary" id="btnLogin">Entrar</button>
+    </div>
+
+    <!-- Galeria -->
+    <div id="galleryView" style="display:none">
+      <div class="filters card">
+        <select id="filterSite" style="display:none"></select>
+        <input type="date" id="filterFrom" title="Desde" />
+        <input type="date" id="filterTo" title="Hasta" />
+        <select id="filterJobType">
+          <option value="">Todos los trabajos</option>
+          <option value="Rutina">Rutina</option>
+          <option value="Proyecto">Proyecto</option>
+        </select>
+        <input type="text" id="filterSearch" placeholder="Buscar sitio, nombre, direccion..." />
+      </div>
+
+      <div class="toolbar">
+        <span class="count-badge" id="countBadge">0 archivos</span>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="btnSelectAll"><span class="label">Seleccionar todo</span></button>
+        <button class="btn btn-secondary" id="btnDownloadZip">⬇ <span class="label">Descargar ZIP</span></button>
+        <button class="btn btn-secondary" id="btnPdf">📄 <span class="label">Reporte PDF</span></button>
+        <button class="btn btn-secondary" id="btnXlsx">📊 <span class="label">Excel cobertura</span></button>
+        <button class="btn btn-danger" id="btnDeleteSelected" style="display:none">🗑 <span class="label">Eliminar</span></button>
+      </div>
+
+      <div class="media-grid" id="mediaGrid"></div>
+      <div class="empty-state" id="emptyState" style="display:none">No hay fotos ni videos con estos filtros.</div>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <h3>Eliminar permanentemente</h3>
+      <p id="confirmText">Esta accion no se puede deshacer.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="btnCancelDelete">Cancelar</button>
+        <button class="btn btn-danger" id="btnConfirmDelete">Si, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="lightbox" class="lightbox-overlay" style="display:none">
+    <button class="lightbox-close" id="btnCloseLightbox">✕</button>
+    <div id="lightboxContent"></div>
+  </div>
+
+  <script src="/c/gallery.js"></script>
+</body>
+</html>

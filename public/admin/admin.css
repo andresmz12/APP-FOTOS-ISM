@@ -1,0 +1,36 @@
+body { background: #0f1614; }
+.admin-container { max-width: 1100px; margin: 0 auto; padding: 24px 16px 80px; }
+.admin-topbar {
+  background: #17322B; color: #fff; padding: 16px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.admin-topbar h1 { margin: 0; font-size: 18px; }
+.admin-topbar .btn { width: auto; padding: 8px 16px; font-size: 13px; }
+
+.login-wrap { max-width: 380px; margin: 100px auto; background: #fff; padding: 30px; border-radius: 14px; }
+
+.companies-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; }
+.companies-table th, .companies-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+.companies-table th { background: #f4f6f5; font-size: 12px; text-transform: uppercase; color: #6b7570; }
+.companies-table tr:hover { background: #fafbfa; }
+.companies-table tr { cursor: pointer; }
+
+.status-pill { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.status-pill.active { background: #eaf6ef; color: #1b8a4c; }
+.status-pill.suspended { background: #fdecea; color: #c0392b; }
+
+.top-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.top-actions h2 { color: #fff; margin: 0; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.form-grid .full { grid-column: 1 / -1; }
+
+.detail-panel { background: #fff; border-radius: 14px; padding: 24px; margin-top: 20px; }
+.detail-panel h3 { margin-top: 0; }
+.sites-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.sites-table th, .sites-table td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 13px; text-align: left; }
+.inline-form { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.inline-form input { flex: 1; min-width: 120px; padding: 10px; border: 1px solid #dfe4e1; border-radius: 8px; }
+.inline-form .btn { width: auto; padding: 10px 16px; }
+
+.back-link { color: #cfe0d8; cursor: pointer; font-size: 14px; margin-bottom: 10px; display: inline-block; }

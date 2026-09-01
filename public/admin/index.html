@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Super-admin - FieldProof</title>
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/admin/admin.css" />
+</head>
+<body>
+  <div id="loginView" class="login-wrap">
+    <h2>Panel de plataforma</h2>
+    <label for="password">Contrasena de super-admin</label>
+    <input type="password" id="password" />
+    <div class="error-msg" id="loginError"></div>
+    <button class="btn btn-primary" id="btnLogin">Entrar</button>
+  </div>
+
+  <div id="appView" style="display:none">
+    <div class="admin-topbar">
+      <h1>FieldProof — Panel de plataforma</h1>
+      <button class="btn btn-secondary" id="btnLogout">Salir</button>
+    </div>
+
+    <div class="admin-container">
+      <!-- Lista de empresas -->
+      <div id="listView">
+        <div class="top-actions">
+          <h2>Empresas clientas</h2>
+          <button class="btn btn-primary" id="btnNewCompany" style="width:auto;padding:10px 18px">+ Nueva empresa</button>
+        </div>
+        <table class="companies-table">
+          <thead>
+            <tr><th>Empresa</th><th>Slug</th><th>Industria</th><th>Sitios</th><th>Archivos</th><th>Plan</th><th>Estado</th></tr>
+          </thead>
+          <tbody id="companiesBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Nueva empresa -->
+      <div id="newCompanyView" class="detail-panel" style="display:none">
+        <span class="back-link" id="backFromNew">← Volver</span>
+        <h3>Nueva empresa</h3>
+        <div class="form-grid">
+          <div><label>Nombre</label><input id="ncName" /></div>
+          <div><label>Slug (URL)</label><input id="ncSlug" placeholder="se genera automatico" /></div>
+          <div><label>Industria</label><input id="ncIndustry" placeholder="Limpieza, mantenimiento..." /></div>
+          <div><label>Color de marca</label><input id="ncColor" type="color" value="#17322B" /></div>
+          <div><label>Admin PIN</label><input id="ncAdminPin" placeholder="PIN para el admin de la empresa" /></div>
+          <div><label>Correo de aviso</label><input id="ncEmail" type="text" placeholder="notificaciones@empresa.com" /></div>
+          <div><label>Plan</label><input id="ncPlan" value="trial" /></div>
+          <div><label>Maximo de sitios</label><input id="ncMaxSites" type="number" value="10" /></div>
+          <div class="full"><label>URL de logo (opcional)</label><input id="ncLogo" placeholder="https://..." /></div>
+        </div>
+        <div class="error-msg" id="ncError"></div>
+        <button class="btn btn-primary" id="btnCreateCompany" style="margin-top:16px;width:auto;padding:12px 20px">Crear empresa</button>
+      </div>
+
+      <!-- Detalle de empresa -->
+      <div id="detailView" style="display:none">
+        <span class="back-link" id="backFromDetail">← Volver a la lista</span>
+        <div class="detail-panel">
+          <h3 id="detailName"></h3>
+          <div class="form-grid">
+            <div><label>Nombre</label><input id="dName" /></div>
+            <div><label>Industria</label><input id="dIndustry" /></div>
+            <div><label>Color de marca</label><input id="dColor" type="color" /></div>
+            <div><label>Admin PIN</label><input id="dAdminPin" /></div>
+            <div><label>Correo de aviso</label><input id="dEmail" /></div>
+            <div><label>Plan</label><input id="dPlan" /></div>
+            <div><label>Maximo de sitios</label><input id="dMaxSites" type="number" /></div>
+            <div><label>URL de logo</label><input id="dLogo" /></div>
+          </div>
+          <div class="error-msg" id="dError"></div>
+          <div class="btn-row" style="max-width:420px">
+            <button class="btn btn-primary" id="btnSaveCompany">Guardar cambios</button>
+            <button class="btn btn-secondary" id="btnToggleStatus">Suspender/Reactivar</button>
+          </div>
+          <p class="hint" id="dPublicUrl"></p>
+        </div>
+
+        <div class="detail-panel">
+          <h3>Sitios</h3>
+          <table class="sites-table">
+            <thead><tr><th>Codigo</th><th>Nombre</th><th>Direccion</th><th>Activo</th><th></th></tr></thead>
+            <tbody id="sitesBody"></tbody>
+          </table>
+          <div class="inline-form">
+            <input id="newSiteCode" placeholder="Codigo de sitio" />
+            <input id="newSiteName" placeholder="Nombre del sitio" />
+            <input id="newSiteAddress" placeholder="Direccion (opcional)" />
+            <button class="btn btn-primary" id="btnAddSite">Agregar sitio</button>
+          </div>
+          <div class="error-msg" id="siteError"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/admin/admin.js"></script>
+</body>
+</html>

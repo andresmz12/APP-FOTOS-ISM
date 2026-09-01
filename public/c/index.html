@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>FieldProof</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#17322B" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="topbar" id="topbar">
+    <img id="logo" class="logo" src="/icons/icon-192.png" alt="" />
+    <h1 id="companyName">Cargando...</h1>
+  </div>
+
+  <div class="container">
+    <div id="suspendedBanner" class="suspended-banner" style="display:none">
+      Esta cuenta esta suspendida temporalmente. Contacta a tu administrador.
+    </div>
+
+    <!-- Paso 1: sitio -->
+    <div class="step active" id="step1">
+      <div class="card">
+        <h2>Ingresa tu codigo de sitio</h2>
+        <label for="siteCode">Codigo de sitio (PIN)</label>
+        <input type="text" id="siteCode" inputmode="numeric" placeholder="Ej. 1024" autocomplete="off" />
+        <div class="error-msg" id="step1Error"></div>
+        <button class="btn btn-primary" id="btnCheckin">Continuar</button>
+      </div>
+    </div>
+
+    <!-- Paso 2: detalles -->
+    <div class="step" id="step2">
+      <div class="card">
+        <h2 id="siteNameDisplay"></h2>
+        <p class="hint" id="siteAddressDisplay"></p>
+
+        <label for="employeeName">Tu nombre (opcional)</label>
+        <input type="text" id="employeeName" placeholder="Nombre del trabajador" />
+
+        <label>Tipo de trabajo</label>
+        <div class="job-type-group">
+          <div class="job-type-option selected" data-value="Rutina">Rutina</div>
+          <div class="job-type-option" data-value="Proyecto">Proyecto</div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btnBackTo1">Atras</button>
+          <button class="btn btn-primary" id="btnToStep3">Continuar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paso 3: fotos -->
+    <div class="step" id="step3">
+      <div class="card">
+        <h2>Fotos y video</h2>
+        <p class="hint">La ubicacion GPS es obligatoria para tomar fotos con camara y se marca en la imagen.</p>
+
+        <div class="photo-actions">
+          <button class="btn btn-primary" id="btnTakePhoto">📷 Tomar foto</button>
+          <button class="btn btn-secondary" id="btnPickGallery">🖼️ Galeria</button>
+        </div>
+        <input type="file" id="cameraInput" accept="image/*,video/*" capture="environment" style="display:none" />
+        <input type="file" id="galleryInput" accept="image/*,video/*" multiple style="display:none" />
+
+        <div class="thumb-grid" id="thumbGrid"></div>
+        <div class="error-msg" id="step3Error"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btnBackTo2">Atras</button>
+          <button class="btn btn-primary" id="btnSubmit">
+            <span id="submitLabel">Enviar evidencia</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paso 4: exito -->
+    <div class="step" id="step4">
+      <div class="card" style="text-align:center">
+        <div class="success-icon">✓</div>
+        <h2>Evidencia enviada</h2>
+        <p class="hint" id="successSummary"></p>
+        <button class="btn btn-primary" id="btnNewJob">Registrar otro trabajo</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/c/app.js"></script>
+</body>
+</html>
