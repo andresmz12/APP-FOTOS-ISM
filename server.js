@@ -13,6 +13,9 @@ if (missingEnv.length) {
   console.warn(`ADVERTENCIA: faltan variables de entorno: ${missingEnv.join(', ')}. La subida de fotos y otras funciones fallaran hasta configurarlas.`);
 }
 
+const pool = require('./src/db/pool');
+const { applySchema } = require('./src/db/migrate');
+
 const app = express();
 
 app.use(cors());
@@ -45,4 +48,17 @@ app.use((err, req, res, next) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`FieldProof corriendo en el puerto ${port}`));
+
+async function start() {
+  if (process.env.DATABASE_URL) {
+    try {
+      await applySchema(pool);
+      console.log('Schema de Postgres verificado/aplicado.');
+    } catch (err) {
+      console.error('No se pudo aplicar el schema de Postgres al arrancar:', err.message);
+    }
+  }
+  app.listen(port, () => console.log(`FieldProof corriendo en el puerto ${port}`));
+}
+
+start();
