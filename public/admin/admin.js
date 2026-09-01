@@ -83,7 +83,6 @@
         <td>${c.industry || '-'}</td>
         <td>${c.site_count}</td>
         <td>${c.media_count}</td>
-        <td>${c.plan}</td>
         <td><span class="status-pill ${c.status}">${c.status === 'active' ? 'Activa' : 'Suspendida'}</span></td>
       </tr>
     `).join('');
@@ -95,8 +94,6 @@
   $('btnNewCompany').addEventListener('click', () => {
     ['ncName', 'ncSlug', 'ncIndustry', 'ncAdminPin', 'ncEmail', 'ncLogo'].forEach((id) => { $(id).value = ''; });
     $('ncColor').value = '#17322B';
-    $('ncPlan').value = 'trial';
-    $('ncMaxSites').value = 10;
     $('ncError').textContent = '';
     showNewCompany();
   });
@@ -115,8 +112,6 @@
           brand_color: $('ncColor').value,
           admin_pin: $('ncAdminPin').value.trim(),
           notify_email: $('ncEmail').value.trim(),
-          plan: $('ncPlan').value.trim() || 'trial',
-          max_sites: Number($('ncMaxSites').value) || 10,
           logo_url: $('ncLogo').value.trim()
         })
       });
@@ -136,8 +131,6 @@
     $('dColor').value = currentCompany.brand_color || '#17322B';
     $('dAdminPin').value = currentCompany.admin_pin;
     $('dEmail').value = currentCompany.notify_email || '';
-    $('dPlan').value = currentCompany.plan;
-    $('dMaxSites').value = currentCompany.max_sites;
     $('dLogo').value = currentCompany.logo_url || '';
     renderPublicUrls(currentCompany.slug);
     $('btnToggleStatus').textContent = currentCompany.status === 'active' ? 'Suspender empresa' : 'Reactivar empresa';
@@ -181,8 +174,6 @@
           brand_color: $('dColor').value,
           admin_pin: $('dAdminPin').value.trim(),
           notify_email: $('dEmail').value.trim(),
-          plan: $('dPlan').value.trim(),
-          max_sites: Number($('dMaxSites').value),
           logo_url: $('dLogo').value.trim()
         })
       });
