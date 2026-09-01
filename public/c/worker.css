@@ -1,0 +1,36 @@
+.step-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 4px 0 20px;
+}
+.step-dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-300);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  transition: all .2s ease;
+}
+.step-dot.active {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+}
+.step-dot.done {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.step-line { width: 28px; height: 1.5px; background: var(--border-strong); }
+
+.site-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+.site-badge svg { color: var(--brand); margin-top: 2px; }
+.site-badge h2 { margin: 0; }

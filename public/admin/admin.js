@@ -73,6 +73,7 @@
   }
 
   function renderCompanies() {
+    $('emptyCompanies').style.display = companies.length ? 'none' : 'block';
     $('companiesBody').innerHTML = companies.map((c) => `
       <tr data-id="${c.id}">
         <td>${c.name}</td>

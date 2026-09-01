@@ -1,9 +1,11 @@
-const { Resend } = require('resend');
+const sgMail = require('@sendgrid/mail');
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 async function sendJobNotification({ to, companyName, siteName, employeeName, jobType, media, appUrl }) {
-  if (!resend || !to) return { skipped: true };
+  if (!process.env.SENDGRID_API_KEY || !to) return { skipped: true };
 
   const thumbs = media
     .slice(0, 8)
@@ -27,12 +29,17 @@ async function sendJobNotification({ to, companyName, siteName, employeeName, jo
     </div>
   `;
 
-  return resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'FieldProof <notificaciones@fieldproof.app>',
-    to,
-    subject: `${companyName}: nuevas fotos en ${siteName}`,
-    html
-  });
+  try {
+    return await sgMail.send({
+      from: process.env.SENDGRID_FROM_EMAIL || 'notificaciones@fieldproof.app',
+      to,
+      subject: `${companyName}: nuevas fotos en ${siteName}`,
+      html
+    });
+  } catch (err) {
+    console.error('Error enviando correo con SendGrid:', err.response?.body || err.message);
+    throw err;
+  }
 }
 
 module.exports = { sendJobNotification };

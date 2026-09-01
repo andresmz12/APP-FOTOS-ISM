@@ -4,45 +4,74 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Super-admin - FieldProof</title>
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/styles.css" />
 <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
   <div id="loginView" class="login-wrap">
+    <div class="login-icon">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2 4 5.5v6c0 5 3.4 8.8 8 10 4.6-1.2 8-5 8-10v-6L12 2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
     <h2>Panel de plataforma</h2>
+    <p class="hint">Acceso exclusivo del dueno de FieldProof.</p>
     <label for="password">Contrasena de super-admin</label>
     <input type="password" id="password" />
     <div class="error-msg" id="loginError"></div>
-    <button class="btn btn-primary" id="btnLogin">Entrar</button>
+    <button class="btn btn-primary" id="btnLogin" style="margin-top:6px">Entrar</button>
   </div>
 
   <div id="appView" style="display:none">
     <div class="admin-topbar">
-      <h1>FieldProof — Panel de plataforma</h1>
-      <button class="btn btn-secondary" id="btnLogout">Salir</button>
+      <div class="admin-topbar-brand">
+        <div class="brand-mark">F</div>
+        <div>
+          <h1>FieldProof</h1>
+          <div class="top-sub">Panel de plataforma</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" id="btnLogout" style="width:auto;padding:9px 16px">Salir</button>
     </div>
 
     <div class="admin-container">
       <!-- Lista de empresas -->
       <div id="listView">
         <div class="top-actions">
-          <h2>Empresas clientas</h2>
-          <button class="btn btn-primary" id="btnNewCompany" style="width:auto;padding:10px 18px">+ Nueva empresa</button>
+          <div>
+            <h2>Empresas clientas</h2>
+            <p class="hint" style="margin-top:2px">Crea, edita y administra el acceso de cada empresa.</p>
+          </div>
+          <button class="btn btn-primary" id="btnNewCompany" style="width:auto;padding:11px 18px">
+            <svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span>Nueva empresa</span>
+          </button>
         </div>
-        <table class="companies-table">
-          <thead>
-            <tr><th>Empresa</th><th>Slug</th><th>Industria</th><th>Sitios</th><th>Archivos</th><th>Plan</th><th>Estado</th></tr>
-          </thead>
-          <tbody id="companiesBody"></tbody>
-        </table>
+        <div class="table-wrap">
+          <table class="companies-table">
+            <thead>
+              <tr><th>Empresa</th><th>Slug</th><th>Industria</th><th>Sitios</th><th>Archivos</th><th>Plan</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="companiesBody"></tbody>
+          </table>
+        </div>
+        <div class="empty-companies" id="emptyCompanies" style="display:none">
+          Aun no hay empresas registradas. Crea la primera con el boton de arriba.
+        </div>
       </div>
 
       <!-- Nueva empresa -->
       <div id="newCompanyView" class="detail-panel" style="display:none">
-        <span class="back-link" id="backFromNew">← Volver</span>
+        <span class="back-link" id="backFromNew">
+          <svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M12 4 6 10l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Volver
+        </span>
         <h3>Nueva empresa</h3>
+        <p class="hint">Se crea de inmediato, sin redeploy. El slug define su enlace publico.</p>
         <div class="form-grid">
-          <div><label>Nombre</label><input id="ncName" /></div>
+          <div><label>Nombre</label><input id="ncName" placeholder="Ej. ABC Cleaning" /></div>
           <div><label>Slug (URL)</label><input id="ncSlug" placeholder="se genera automatico" /></div>
           <div><label>Industria</label><input id="ncIndustry" placeholder="Limpieza, mantenimiento..." /></div>
           <div><label>Color de marca</label><input id="ncColor" type="color" value="#17322B" /></div>
@@ -53,12 +82,15 @@
           <div class="full"><label>URL de logo (opcional)</label><input id="ncLogo" placeholder="https://..." /></div>
         </div>
         <div class="error-msg" id="ncError"></div>
-        <button class="btn btn-primary" id="btnCreateCompany" style="margin-top:16px;width:auto;padding:12px 20px">Crear empresa</button>
+        <button class="btn btn-primary" id="btnCreateCompany" style="margin-top:18px;width:auto;padding:12px 22px">Crear empresa</button>
       </div>
 
       <!-- Detalle de empresa -->
       <div id="detailView" style="display:none">
-        <span class="back-link" id="backFromDetail">← Volver a la lista</span>
+        <span class="back-link" id="backFromDetail">
+          <svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M12 4 6 10l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Volver a la lista
+        </span>
         <div class="detail-panel">
           <h3 id="detailName"></h3>
           <div class="form-grid">
@@ -72,7 +104,7 @@
             <div><label>URL de logo</label><input id="dLogo" /></div>
           </div>
           <div class="error-msg" id="dError"></div>
-          <div class="btn-row" style="max-width:420px">
+          <div class="btn-row" style="max-width:440px">
             <button class="btn btn-primary" id="btnSaveCompany">Guardar cambios</button>
             <button class="btn btn-secondary" id="btnToggleStatus">Suspender/Reactivar</button>
           </div>
@@ -81,15 +113,17 @@
 
         <div class="detail-panel">
           <h3>Sitios</h3>
-          <table class="sites-table">
-            <thead><tr><th>Codigo</th><th>Nombre</th><th>Direccion</th><th>Activo</th><th></th></tr></thead>
-            <tbody id="sitesBody"></tbody>
-          </table>
+          <div class="table-wrap">
+            <table class="sites-table">
+              <thead><tr><th>Codigo</th><th>Nombre</th><th>Direccion</th><th>Activo</th><th></th></tr></thead>
+              <tbody id="sitesBody"></tbody>
+            </table>
+          </div>
           <div class="inline-form">
             <input id="newSiteCode" placeholder="Codigo de sitio" />
             <input id="newSiteName" placeholder="Nombre del sitio" />
             <input id="newSiteAddress" placeholder="Direccion (opcional)" />
-            <button class="btn btn-primary" id="btnAddSite">Agregar sitio</button>
+            <button class="btn btn-primary" id="btnAddSite" style="width:auto;padding:10px 18px">Agregar sitio</button>
           </div>
           <div class="error-msg" id="siteError"></div>
         </div>

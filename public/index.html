@@ -7,45 +7,131 @@
 <link rel="manifest" href="/manifest.json" />
 <meta name="theme-color" content="#17322B" />
 <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
+  :root {
+    --brand: #17322B;
+    --ink-900: #12181a;
+    --ink-500: #6a7573;
+    --border: rgba(255,255,255,.12);
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #17322B;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background:
+      radial-gradient(1100px 500px at 12% -8%, rgba(255,255,255,.06), transparent),
+      radial-gradient(900px 500px at 110% 15%, rgba(255,255,255,.05), transparent),
+      var(--brand);
     color: #fff;
-    text-align: center;
-    padding: 20px;
+    letter-spacing: -0.01em;
   }
-  .card { max-width: 420px; }
-  h1 { font-size: 26px; margin-bottom: 8px; }
-  p { color: #cfe0d8; font-size: 15px; line-height: 1.5; }
-  a.btn {
-    display: inline-block;
-    margin-top: 20px;
-    padding: 12px 24px;
-    background: #fff;
-    color: #17322B;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: 600;
+  .wrap { max-width: 880px; margin: 0 auto; padding: 28px 22px 60px; }
+  .nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+  .brand .mark {
+    width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,.12);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px;
   }
-  code { background: rgba(255,255,255,.1); padding: 2px 6px; border-radius: 4px; }
+  .nav a {
+    color: rgba(255,255,255,.85); text-decoration: none; font-size: 13.5px; font-weight: 600;
+    border: 1.5px solid var(--border); padding: 9px 16px; border-radius: 9px; transition: background .15s ease;
+  }
+  .nav a:hover { background: rgba(255,255,255,.08); }
+
+  .hero { padding: 10px 0 8px; }
+  .kicker {
+    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(255,255,255,.65); background: rgba(255,255,255,.08); padding: 6px 12px; border-radius: 20px; margin-bottom: 18px;
+  }
+  h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.025em; max-width: 640px; }
+  .lead { font-size: 16.5px; color: rgba(255,255,255,.75); max-width: 520px; line-height: 1.6; margin: 0 0 30px; }
+
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14.5px;
+    padding: 13px 22px; border-radius: 10px; text-decoration: none; transition: filter .15s ease, background .15s ease;
+  }
+  .btn-primary { background: #fff; color: var(--brand); }
+  .btn-primary:hover { filter: brightness(0.96); }
+  .btn-ghost { background: transparent; color: #fff; border: 1.5px solid var(--border); }
+  .btn-ghost:hover { background: rgba(255,255,255,.06); }
+
+  .features {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;
+    margin-top: 56px;
+  }
+  .feature {
+    background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+  }
+  .feature .ic {
+    width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,.1);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: #fff;
+  }
+  .feature .ic svg { width: 18px; height: 18px; }
+  .feature h3 { font-size: 14.5px; margin: 0 0 6px; font-weight: 700; }
+  .feature p { font-size: 13.5px; color: rgba(255,255,255,.65); margin: 0; line-height: 1.5; }
+
+  .path-note {
+    margin-top: 56px; padding: 18px 20px; border-radius: 14px; background: rgba(255,255,255,.05);
+    border: 1px solid var(--border); font-size: 13.5px; color: rgba(255,255,255,.7); line-height: 1.6;
+  }
+  .path-note code { background: rgba(255,255,255,.12); padding: 2px 7px; border-radius: 5px; font-size: 12.5px; color: #fff; }
+
+  footer { margin-top: 50px; font-size: 12.5px; color: rgba(255,255,255,.4); text-align: center; }
 </style>
 </head>
 <body>
-  <div class="card">
-    <h1>FieldProof</h1>
-    <p>
-      Evidencia fotografica de campo. Cada empresa clienta tiene su propio enlace
-      <code>/c/&lt;slug-empresa&gt;</code> para que sus trabajadores suban fotos,
-      y <code>/c/&lt;slug-empresa&gt;/galeria</code> para que su administrador las vea.
-    </p>
-    <a class="btn" href="/admin">Entrar al panel de plataforma</a>
+  <div class="wrap">
+    <div class="nav">
+      <div class="brand"><span class="mark">F</span> FieldProof</div>
+      <a href="/admin">Panel de plataforma</a>
+    </div>
+
+    <div class="hero">
+      <span class="kicker">Evidencia fotografica de campo</span>
+      <h1>Prueba visual de cada trabajo, con fecha, ubicacion y firma GPS.</h1>
+      <p class="lead">
+        Tu equipo toma la foto y llega directo a la carpeta de su empresa y sitio, con
+        sello de ubicacion quemado en la imagen. Sin apps que instalar, sin contrasenas
+        que recordar — solo un codigo por sitio.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/admin">
+          Entrar al panel de plataforma
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><path d="M10 18s6-5.2 6-9.6A6 6 0 1 0 4 8.4C4 12.8 10 18 10 18Z" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="8.4" r="2.2" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <h3>Sello GPS automatico</h3>
+        <p>Sitio, direccion, fecha y hora quemados en cada foto tomada con camara.</p>
+      </div>
+      <div class="feature">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><rect x="4" y="10" width="12" height="7" rx="1.6" stroke="currentColor" stroke-width="1.6"/><path d="M7 10V7.5a3 3 0 0 1 6 0V10" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <h3>Acceso sin contrasenas</h3>
+        <p>Cada trabajador entra con el codigo de su sitio. Cada empresa esta aislada de las demas.</p>
+      </div>
+      <div class="feature">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><path d="M6 2.5h5.5L15 6v10.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M11 2.5V6h4" stroke="currentColor" stroke-width="1.5"/></svg></div>
+        <h3>Reportes listos para enviar</h3>
+        <p>Descarga en ZIP, genera un PDF por sitio o un Excel de cobertura en un clic.</p>
+      </div>
+    </div>
+
+    <div class="path-note">
+      Cada empresa clienta tiene su propio enlace: <code>/c/&lt;slug-empresa&gt;</code> para que sus
+      trabajadores suban evidencia, y <code>/c/&lt;slug-empresa&gt;/galeria</code> para que su
+      administrador la revise. Se crean desde el panel de plataforma, sin redeploy.
+    </div>
+
+    <footer>FieldProof — evidencia fotografica de campo</footer>
   </div>
 </body>
 </html>

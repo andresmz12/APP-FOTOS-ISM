@@ -10,7 +10,7 @@ total de datos por `company_id`.
 - Node.js + Express (API REST + sirve el frontend estatico)
 - PostgreSQL (Railway, via `DATABASE_URL`)
 - Cloudinary (cuenta central, subida firmada, una carpeta por empresa/sitio/fecha)
-- Resend (correo de aviso al admin de cada empresa)
+- SendGrid (correo de aviso al admin de cada empresa)
 - Frontend: HTML/CSS/JS vanilla, PWA instalable
 - PDF: `pdfkit` (generado en el servidor) · Excel: `exceljs` · ZIP: `archiver`
 
@@ -25,7 +25,7 @@ src/
     public.js               marca publica, checkin, firma de subida, registro de jobs (trabajador)
     media.js                galeria, borrado, zip, reporte PDF, excel de cobertura (admin de empresa)
     admin.js                login y CRUD de empresas/sitios (super-admin)
-  services/                 cloudinary.js, email.js (Resend), geocode.js (Nominatim)
+  services/                 cloudinary.js, email.js (SendGrid), geocode.js (Nominatim)
   utils/                    asyncHandler, firma de token de sesion del super-admin
 public/
   manifest.json, sw.js, icons/     PWA
@@ -38,7 +38,7 @@ public/
 1. Copia `.env.example` a `.env` y completa las variables:
    - `DATABASE_URL`: la inyecta Railway automaticamente al conectar el plugin de Postgres.
    - `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET`: de tu cuenta central de Cloudinary (Dashboard → Account Details). No se usa unsigned preset: toda subida pasa por una firma generada en el backend.
-   - `RESEND_API_KEY` y `RESEND_FROM_EMAIL`: crea una API key en resend.com y verifica el dominio remitente.
+   - `SENDGRID_API_KEY` y `SENDGRID_FROM_EMAIL`: crea una API key en el panel de SendGrid (Settings → API Keys) y verifica el dominio o correo remitente en Sender Authentication.
    - `PLATFORM_ADMIN_PASSWORD`: la contrasena unica para entrar a `/admin` (tu panel de super-admin).
    - `SESSION_SECRET`: cadena aleatoria larga para firmar el token de sesion del super-admin.
    - `PUBLIC_APP_URL`: URL publica de la app en Railway, se usa en los correos de aviso.

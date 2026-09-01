@@ -23,6 +23,16 @@
   function goToStep(n) {
     Object.values(steps).forEach((el) => el.classList.remove('active'));
     steps[n].classList.add('active');
+
+    const progress = $('stepProgress');
+    if (progress) {
+      progress.style.display = n === 4 ? 'none' : 'flex';
+      progress.querySelectorAll('.step-dot').forEach((dot) => {
+        const dotStep = Number(dot.dataset.step);
+        dot.classList.toggle('active', dotStep === n);
+        dot.classList.toggle('done', dotStep < n);
+      });
+    }
   }
 
   function toast(msg, isError) {
@@ -247,7 +257,7 @@
         : `<img src="${f.previewUrl}" />`;
       const remove = document.createElement('button');
       remove.className = 'remove';
-      remove.textContent = '✕';
+      remove.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
       remove.onclick = () => {
         URL.revokeObjectURL(f.previewUrl);
         state.files = state.files.filter((x) => x.id !== f.id);
