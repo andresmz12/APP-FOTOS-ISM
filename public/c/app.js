@@ -392,8 +392,12 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
+        // Incluye el codigo de locacion junto al nombre: varios sitios pueden
+        // compartir el mismo nombre (ej. varias tiendas "Jewel-Osco"), y sin
+        // el codigo no se puede saber cual de todas es en la foto.
+        const siteLabel = state.site.site_code ? `${state.site.name} · ${state.site.site_code}` : state.site.name;
         const lines = [
-          state.site.name,
+          siteLabel,
           address || (lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'Ubicacion no disponible'),
           new Date().toLocaleString('es-MX')
         ];
@@ -481,6 +485,15 @@
       div.appendChild(bar);
       grid.appendChild(div);
     });
+
+    // Tile "+" al final de la cuadricula para agregar mas sin volver a los
+    // botones de arriba. Abre la galeria (siempre disponible, no depende del GPS).
+    const addTile = document.createElement('button');
+    addTile.type = 'button';
+    addTile.className = 'thumb thumb-add';
+    addTile.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    addTile.addEventListener('click', () => $('galleryInput').click());
+    grid.appendChild(addTile);
   }
 
   function updateThumbProgress(id, pct) {

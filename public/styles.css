@@ -177,6 +177,15 @@ input:focus, select:focus {
 }
 .thumb .status.status-warn { background: rgba(184, 124, 21, .88); }
 
+.thumb-add {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-alt); border: 1.5px dashed var(--border-strong);
+  color: var(--ink-500); cursor: pointer; padding: 0;
+  transition: background .1s ease, border-color .15s ease;
+}
+.thumb-add:hover, .thumb-add:active { background: var(--brand-soft); border-color: var(--brand); color: var(--brand-text); }
+.thumb-add svg { width: 26px; height: 26px; }
+
 .spinner {
   width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.35);
   border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite;
