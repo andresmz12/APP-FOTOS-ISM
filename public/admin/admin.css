@@ -47,7 +47,7 @@ body { background: var(--bg); }
 .status-pill.suspended { background: var(--danger-bg); color: var(--danger); }
 
 .top-actions { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 16px; }
-.top-actions h2 { color: var(--ink-900); margin: 0; font-size: 20px; }
+.top-actions h2 { color: var(--ink-900); margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
 .form-grid .full { grid-column: 1 / -1; }
@@ -57,7 +57,7 @@ body { background: var(--bg); }
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
   padding: 26px; margin-top: 20px; box-shadow: var(--shadow-sm);
 }
-.detail-panel h3 { margin-top: 0; font-size: 17px; }
+.detail-panel h3 { margin-top: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.015em; }
 
 .inline-form { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
 .inline-form input { flex: 1; min-width: 140px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font); font-size: 14px; }
@@ -137,3 +137,13 @@ body { background: var(--bg); }
 .modal h3 { margin: 0 0 6px; font-size: 17px; }
 .modal p { color: var(--ink-500); font-size: 14px; margin: 0; }
 .modal .btn-row { margin-top: 20px; }
+
+/* Codigos y PINs en fuente monoespaciada -- se leen como datos tecnicos,
+   no como texto normal, mas facil de copiar sin ambiguedad (0 vs O, etc). */
+#ncAdminPin, #dAdminPin, #newSiteCode, #siteSearch {
+  font-family: var(--font-mono); letter-spacing: 0.02em;
+}
+.sites-table td:nth-child(2), .companies-table td:nth-child(2) {
+  font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.01em;
+}
+.link-row a { font-family: var(--font-mono); font-size: 12.5px; }

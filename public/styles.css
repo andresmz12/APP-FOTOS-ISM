@@ -30,6 +30,10 @@
   --shadow-sm: 0 1px 2px rgba(15, 23, 21, 0.06);
   --shadow-md: 0 8px 24px -8px rgba(15, 23, 21, 0.18);
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Para codigos, PINs y numeros -- el detalle que hace ver software serio
+     (Stripe, Linear, etc. usan mono para IDs/codigos en vez de la fuente
+     de texto normal). */
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -61,7 +65,7 @@ svg.icon { width: 18px; height: 18px; flex-shrink: 0; }
   box-shadow: var(--shadow-sm);
 }
 .topbar img.logo { height: 30px; width: 30px; border-radius: 8px; object-fit: cover; background: rgba(255,255,255,.12); }
-.topbar h1 { font-size: 16px; margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+.topbar h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: -0.015em; }
 .topbar .top-sub { font-size: 12px; color: var(--brand-fg-soft); margin-top: 1px; }
 
 .container { max-width: 520px; margin: 0 auto; padding: 22px 16px 110px; }
@@ -84,7 +88,7 @@ svg.icon { width: 18px; height: 18px; flex-shrink: 0; }
 .step { display: none; }
 .step.active { display: block; }
 
-.card h2 { font-size: 18px; margin: 0 0 4px; font-weight: 600; letter-spacing: -0.015em; }
+.card h2 { font-size: 18.5px; margin: 0 0 4px; font-weight: 700; letter-spacing: -0.02em; }
 .card > p.hint:first-of-type { margin-top: 0; }
 
 label { display: block; font-size: 12.5px; color: var(--ink-500); margin: 16px 0 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }

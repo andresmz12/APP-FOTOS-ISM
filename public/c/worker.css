@@ -38,8 +38,8 @@
 /* --- Teclado numerico del paso 1 --- */
 .code-display-box { display: flex; justify-content: center; margin: 18px 0 4px; }
 .code-display-box input {
-  width: 100%; max-width: 220px; text-align: center; font-family: var(--font);
-  font-size: 30px; letter-spacing: 0.15em; font-weight: 700; color: var(--brand-text);
+  width: 100%; max-width: 220px; text-align: center; font-family: var(--font-mono);
+  font-size: 28px; letter-spacing: 0.15em; font-weight: 600; color: var(--brand-text);
   padding: 12px 10px; border: 2px solid var(--border); border-radius: var(--radius-md);
   background: var(--surface); caret-color: transparent;
 }
