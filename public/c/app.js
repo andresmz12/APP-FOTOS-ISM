@@ -24,6 +24,28 @@
   const stepOrder = [1, 2, 3, 4];
   let currentStepNum = 1;
 
+  // Calcula si un color de marca es claro u oscuro y define variables CSS
+  // de texto con contraste seguro, para que un color de marca palido (o
+  // blanco) no deje texto blanco invisible sobre fondo blanco.
+  function applyBrandColors(hex) {
+    const color = hex || '#17322B';
+    document.documentElement.style.setProperty('--brand', color);
+
+    const clean = color.replace('#', '');
+    let light = false;
+    if (clean.length === 6) {
+      const r = parseInt(clean.slice(0, 2), 16);
+      const g = parseInt(clean.slice(2, 4), 16);
+      const b = parseInt(clean.slice(4, 6), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      light = luminance > 0.6;
+    }
+
+    document.documentElement.style.setProperty('--brand-fg', light ? '#12181a' : '#ffffff');
+    document.documentElement.style.setProperty('--brand-fg-soft', light ? 'rgba(18,24,26,.62)' : 'rgba(255,255,255,.62)');
+    document.documentElement.style.setProperty('--brand-text', light ? '#12181a' : color);
+  }
+
   // --- Transiciones direccionales tipo app nativa entre pasos ---
   // transitionGen evita que dos transiciones superpuestas (ej. navegacion
   // rapida antes de que termine la limpieza de la anterior) dejen un paso
@@ -116,7 +138,7 @@
       state.company = c;
       $('companyName').textContent = c.name;
       document.title = `${c.name} - FieldProof`;
-      document.documentElement.style.setProperty('--brand', c.brandColor || '#17322B');
+      applyBrandColors(c.brandColor);
       $('topbar').style.background = c.brandColor || '#17322B';
       if (c.logoUrl) $('logo').src = c.logoUrl;
       if (c.status !== 'active') {

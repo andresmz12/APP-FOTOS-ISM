@@ -2,6 +2,15 @@
   --brand: #17322B;
   --brand-ink: #0e1f1a;
   --brand-soft: #e8f0ec;
+  /* Texto legible sobre un fondo var(--brand): blanco si el color de marca es
+     oscuro, tinta oscura si es claro. Se recalcula en JS segun el color real
+     de cada empresa (ver contrastColor en app.js / gallery.js). */
+  --brand-fg: #ffffff;
+  --brand-fg-soft: rgba(255, 255, 255, .62);
+  /* Version del color de marca segura para usarse como TEXTO sobre fondos
+     claros (chips, badges) -- si el color de marca es muy palido, cae a la
+     tinta oscura en vez de perderse. */
+  --brand-text: #17322B;
   --ink-900: #12181a;
   --ink-700: #3f4a48;
   --ink-500: #6a7573;
@@ -41,7 +50,7 @@ svg.icon { width: 18px; height: 18px; flex-shrink: 0; }
 
 .topbar {
   background: var(--brand);
-  color: #fff;
+  color: var(--brand-fg);
   padding: 14px 18px;
   display: flex;
   align-items: center;
@@ -53,7 +62,7 @@ svg.icon { width: 18px; height: 18px; flex-shrink: 0; }
 }
 .topbar img.logo { height: 30px; width: 30px; border-radius: 8px; object-fit: cover; background: rgba(255,255,255,.12); }
 .topbar h1 { font-size: 16px; margin: 0; font-weight: 600; letter-spacing: -0.01em; }
-.topbar .top-sub { font-size: 12px; color: rgba(255,255,255,.62); margin-top: 1px; }
+.topbar .top-sub { font-size: 12px; color: var(--brand-fg-soft); margin-top: 1px; }
 
 .container { max-width: 520px; margin: 0 auto; padding: 22px 16px 110px; }
 
@@ -114,7 +123,7 @@ input:focus, select:focus {
   letter-spacing: -0.005em;
 }
 .btn:active { transform: scale(0.98); }
-.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary { background: var(--brand); color: var(--brand-fg); }
 .btn-primary:hover { filter: brightness(1.08); }
 .btn-secondary { background: var(--surface); color: var(--ink-900); border-color: var(--border-strong); }
 .btn-secondary:hover { background: var(--surface-alt); }
@@ -139,7 +148,7 @@ input:focus, select:focus {
   color: var(--ink-500);
   transition: all .15s ease;
 }
-.job-type-option.selected { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+.job-type-option.selected { border-color: var(--brand); color: var(--brand-text); background: var(--brand-soft); }
 
 .photo-actions { display: flex; gap: 10px; margin: 18px 0 4px; }
 .photo-actions .btn { flex: 1; }

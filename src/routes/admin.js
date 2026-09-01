@@ -119,9 +119,65 @@ router.post('/companies/:id/sites', asyncHandler(async (req, res) => {
   }
 }));
 
+// Encuentra la columna que corresponde a "locacion" o "nombre" leyendo el
+// texto del encabezado (fila 1), en vez de asumir un orden de columnas fijo
+// -- distintos archivos traen el orden distinto (algunos ponen el nombre
+// primero, otros el codigo primero).
+const LOCATION_KEYWORDS = ['locacion', 'locación', 'ubicacion', 'ubicación', 'codigo', 'código', 'code', 'location', 'store', 'tienda', 'sitio', 'numero', 'número'];
+const NAME_KEYWORDS = ['nombre', 'name'];
+
+function findColumnByKeywords(headers, keywords) {
+  for (let col = 1; col < headers.length; col++) {
+    const h = headers[col];
+    if (h && keywords.some((k) => h.includes(k))) return col;
+  }
+  return null;
+}
+
+function detectColumns(headerRow) {
+  const headers = [];
+  headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    headers[colNumber] = String(cell.value ?? '').trim().toLowerCase();
+  });
+
+  let codeCol = findColumnByKeywords(headers, LOCATION_KEYWORDS);
+  let nameCol = findColumnByKeywords(headers, NAME_KEYWORDS);
+
+  // Si no se reconoce el encabezado de alguna columna (o ambas apuntan a la
+  // misma), se usa el orden por defecto: columna A = locacion, columna B = nombre.
+  let detected = true;
+  if (!codeCol || !nameCol || codeCol === nameCol) {
+    codeCol = 1;
+    nameCol = 2;
+    detected = false;
+  }
+
+  return {
+    codeCol,
+    nameCol,
+    detected,
+    codeLabel: headers[codeCol] || `columna ${codeCol}`,
+    nameLabel: headers[nameCol] || `columna ${nameCol}`
+  };
+}
+
+// Agrupa filas omitidas por el mismo motivo para no mostrar decenas de
+// lineas identicas (ej. muchos "codigo duplicado" del mismo tipo de error).
+function summarizeSkipped(skippedRaw) {
+  const groups = new Map();
+  for (const s of skippedRaw) {
+    if (!groups.has(s.reason)) groups.set(s.reason, []);
+    groups.get(s.reason).push(s.row);
+  }
+  return [...groups.entries()].map(([reason, rows]) => ({
+    reason,
+    rowsLabel: rows.length > 3 ? `${rows.length} filas (${rows[0]}-${rows[rows.length - 1]})` : `fila(s) ${rows.join(', ')}`
+  }));
+}
+
 // POST /api/admin/companies/:id/sites/bulk -> carga masiva desde Excel/CSV
 // con dos columnas: Locacion (codigo) y Nombre. La primera fila se asume
-// como encabezado y se ignora.
+// como encabezado y se ignora (se usa para detectar cual columna es cual).
 router.post('/companies/:id/sites/bulk', upload.single('file'), asyncHandler(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Falta el archivo' });
 
@@ -146,18 +202,20 @@ router.post('/companies/:id/sites/bulk', upload.single('file'), asyncHandler(asy
     return res.status(400).json({ error: 'El archivo no tiene filas de datos (solo se detecto el encabezado o esta vacio).' });
   }
 
+  const { codeCol, nameCol, detected, codeLabel, nameLabel } = detectColumns(sheet.getRow(1));
+
   const createdSites = [];
-  const skipped = [];
+  const skippedRaw = [];
 
   for (let i = 2; i <= sheet.rowCount; i++) {
     const row = sheet.getRow(i);
-    const siteCode = String(row.getCell(1).value ?? '').trim();
-    const name = String(row.getCell(2).value ?? '').trim();
+    const siteCode = String(row.getCell(codeCol).value ?? '').trim();
+    const name = String(row.getCell(nameCol).value ?? '').trim();
 
     if (!siteCode && !name) continue; // fila vacia, se ignora sin reportar
 
-    if (!siteCode) { skipped.push({ row: i, reason: 'Falta la locacion (codigo)' }); continue; }
-    if (!name) { skipped.push({ row: i, reason: `Falta el nombre para la locacion ${siteCode}` }); continue; }
+    if (!siteCode) { skippedRaw.push({ row: i, reason: 'Falta la locacion (codigo)' }); continue; }
+    if (!name) { skippedRaw.push({ row: i, reason: `Falta el nombre para la locacion ${siteCode}` }); continue; }
 
     try {
       const { rows } = await pool.query(
@@ -167,14 +225,21 @@ router.post('/companies/:id/sites/bulk', upload.single('file'), asyncHandler(asy
       createdSites.push(rows[0]);
     } catch (err) {
       if (err.code === '23505') {
-        skipped.push({ row: i, reason: `Ya existe un sitio con la locacion ${siteCode}` });
+        skippedRaw.push({ row: i, reason: `Codigo de locacion duplicado: ${siteCode}` });
       } else {
         throw err;
       }
     }
   }
 
-  res.json({ created: createdSites.length, sites: createdSites, skipped });
+  res.json({
+    created: createdSites.length,
+    sites: createdSites,
+    skipped: summarizeSkipped(skippedRaw),
+    skippedCount: skippedRaw.length,
+    columnsDetected: detected,
+    columnsUsed: { code: codeLabel, name: nameLabel }
+  });
 }));
 
 // PATCH /api/admin/sites/:id

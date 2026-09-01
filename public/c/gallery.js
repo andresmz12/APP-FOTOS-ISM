@@ -20,6 +20,28 @@
     setTimeout(() => el.remove(), 3200);
   }
 
+  // Calcula si un color de marca es claro u oscuro y define variables CSS
+  // de texto con contraste seguro, para que un color de marca palido (o
+  // blanco) no deje texto blanco invisible sobre fondo blanco.
+  function applyBrandColors(hex) {
+    const color = hex || '#17322B';
+    document.documentElement.style.setProperty('--brand', color);
+
+    const clean = color.replace('#', '');
+    let light = false;
+    if (clean.length === 6) {
+      const r = parseInt(clean.slice(0, 2), 16);
+      const g = parseInt(clean.slice(2, 4), 16);
+      const b = parseInt(clean.slice(4, 6), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      light = luminance > 0.6;
+    }
+
+    document.documentElement.style.setProperty('--brand-fg', light ? '#12181a' : '#ffffff');
+    document.documentElement.style.setProperty('--brand-fg-soft', light ? 'rgba(18,24,26,.62)' : 'rgba(255,255,255,.62)');
+    document.documentElement.style.setProperty('--brand-text', light ? '#12181a' : color);
+  }
+
   async function loadCompany() {
     const res = await fetch(`/api/companies/${slug}`);
     if (!res.ok) {
@@ -28,7 +50,7 @@
     }
     state.company = await res.json();
     $('companyName').textContent = `${state.company.name} - Galeria`;
-    document.documentElement.style.setProperty('--brand', state.company.brandColor || '#17322B');
+    applyBrandColors(state.company.brandColor);
     $('topbar').style.background = state.company.brandColor || '#17322B';
     if (state.company.logoUrl) $('logo').src = state.company.logoUrl;
 

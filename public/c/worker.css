@@ -17,12 +17,12 @@
 .step-dot.active {
   border-color: var(--brand);
   background: var(--brand);
-  color: #fff;
+  color: var(--brand-fg);
 }
 .step-dot.done {
   border-color: var(--brand);
   background: var(--brand-soft);
-  color: var(--brand);
+  color: var(--brand-text);
 }
 .step-line { width: 28px; height: 1.5px; background: var(--border-strong); }
 
@@ -32,14 +32,14 @@
   gap: 12px;
   padding-bottom: 4px;
 }
-.site-badge svg { color: var(--brand); margin-top: 2px; }
+.site-badge svg { color: var(--brand-text); margin-top: 2px; }
 .site-badge h2 { margin: 0; }
 
 /* --- Teclado numerico del paso 1 --- */
 .code-display-box { display: flex; justify-content: center; margin: 18px 0 4px; }
 .code-display-box input {
   width: 100%; max-width: 220px; text-align: center; font-family: var(--font);
-  font-size: 30px; letter-spacing: 0.15em; font-weight: 700; color: var(--brand);
+  font-size: 30px; letter-spacing: 0.15em; font-weight: 700; color: var(--brand-text);
   padding: 12px 10px; border: 2px solid var(--border); border-radius: var(--radius-md);
   background: var(--surface); caret-color: transparent;
 }
@@ -73,7 +73,7 @@
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .confirm-check svg { width: 13px; height: 13px; }
-.confirm-name { font-weight: 600; font-size: 14.5px; color: var(--brand); }
+.confirm-name { font-weight: 600; font-size: 14.5px; color: var(--brand-text); }
 
 /* --- Banner de estado de GPS, persistente en el paso de fotos --- */
 .geo-banner {

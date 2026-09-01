@@ -269,8 +269,14 @@
       if (!res.ok) throw new Error(data.error || 'Error de red');
 
       const parts = [`<div class="bulk-summary">✓ ${data.created} sitio(s) creados</div>`];
+      if (data.columnsUsed) {
+        const note = data.columnsDetected
+          ? `Columnas detectadas por encabezado: locacion = "${data.columnsUsed.code}", nombre = "${data.columnsUsed.name}".`
+          : `No se reconocio el encabezado de las columnas; se uso el orden por defecto (columna A = locacion, columna B = nombre). Revisa la tabla de abajo para confirmar que quedo bien.`;
+        parts.push(`<p class="hint" style="margin-top:8px">${note}</p>`);
+      }
       if (data.skipped && data.skipped.length) {
-        parts.push(`<div class="bulk-skipped"><strong>${data.skipped.length} fila(s) omitidas:</strong><ul>${data.skipped.map((s) => `<li>Fila ${s.row}: ${s.reason}</li>`).join('')}</ul></div>`);
+        parts.push(`<div class="bulk-skipped"><strong>${data.skippedCount} fila(s) omitidas:</strong><ul>${data.skipped.map((s) => `<li>${s.reason} — ${s.rowsLabel}</li>`).join('')}</ul></div>`);
       }
       $('bulkResult').innerHTML = parts.join('');
       fileInput.value = '';
