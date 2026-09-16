@@ -82,12 +82,95 @@ retroactivamente los commits que ya existian: necesitas un push nuevo (o el boto
 
 ## Flujo de uso
 
-- **Trabajador**: entra a `/c/<slug>`, escribe el codigo de su sitio, elige tipo de trabajo (Rutina/Proyecto), toma fotos (GPS obligatorio) o las elige de galeria (GPS opcional), y las envia. Cada foto queda con el sello de sitio/direccion/fecha quemado en la esquina inferior.
+- **Trabajador**: entra a `/c/<slug>`, escribe el codigo de su sitio, elige tipo de trabajo (Rutina/Proyecto), toma fotos (GPS obligatorio) o las elige de galeria (GPS opcional), y las envia. Cada foto queda con el sello de ubicacion exacta (direccion o coordenadas) y fecha/hora quemado en la esquina inferior.
 - **Admin de empresa**: entra a `/c/<slug>/galeria` con el `admin_pin` de su empresa (ve todos los sitios) o con el codigo de un sitio especifico (ve solo ese sitio). Puede filtrar, descargar en lote (.zip), generar reporte PDF, exportar el Excel de cobertura, y eliminar permanentemente con confirmacion.
 - **Super-admin**: entra a `/admin` con `PLATFORM_ADMIN_PASSWORD`. Crea y edita empresas, agrega/activa/desactiva sitios, y suspende o reactiva una empresa manualmente.
 
+## App nativa (Play Store / App Store) con Capacitor
+
+FieldProof es una app web (Express + Postgres), no nativa. Para publicarla en
+las tiendas se empaqueta con [Capacitor](https://capacitorjs.com/): un WebView
+nativo que carga la app en vivo desde tu dominio de produccion (no una copia
+estatica), asi que ambas versiones (web y tienda) siempre usan el mismo
+backend/base de datos.
+
+Ya esta en el repo: `capacitor.config.ts`, y los proyectos nativos generados
+en `android/` (Android Studio / Gradle) y `ios/` (Xcode). Antes de compilar:
+
+1. Define en tu entorno (o en un `.env` local, no se commitea):
+   ```
+   CAPACITOR_SERVER_URL=https://tu-dominio-de-produccion.com
+   CAPACITOR_START_PATH=/c/tu-slug-de-empresa
+   ```
+2. Sincroniza los cambios web hacia los proyectos nativos cada vez que cambies algo en `public/`:
+   ```
+   npm run cap:sync
+   ```
+3. Abre y compila:
+   - Android: `npm run cap:android` (requiere Android Studio) → genera el `.aab` para subir a Play Console.
+   - iOS: `npm run cap:ios` (requiere macOS + Xcode) → archiva y sube a App Store Connect.
+
+Ya se agregaron los permisos nativos que la app necesita (camara y ubicacion)
+en `AndroidManifest.xml` e `Info.plist`.
+
+### Checklist para publicar
+
+**Google Play (Android)**
+- Cuenta de Google Play Console (pago unico de USD 25).
+- Generar una key de firma (`keytool`) y guardarla a salvo — Play usa "App Signing", solo necesitas subir la key de subida una vez.
+- Icono, capturas de pantalla (telefono y, si aplica, tablet), descripcion corta/larga, categoria.
+- **Politica de privacidad publicada en una URL** (obligatoria: la app pide camara y ubicacion).
+- Completar el cuestionario de "Seguridad de los datos" (que datos se recogen: fotos, ubicacion, y con que fin).
+- Como es una app para trabajadores de empresas clientas (no publico general), considera "Publicacion interna/cerrada" (internal testing / closed testing en Play Console) en vez de produccion publica si no quieres que cualquiera la descargue.
+
+**Apple App Store (iOS)**
+- Cuenta de Apple Developer Program (USD 99/ano).
+- Xcode + un Mac (o un servicio de build en la nube tipo Codemagic/Bitrise si no tienes Mac).
+- Apple es estricta con apps que son "solo un sitio web envuelto" (guideline 4.2, minimum functionality): al usar camara y GPS nativos ya cumple mejor, pero puede pedir justificacion. Tenerlo claro en la descripcion/nota para el revisor ayuda.
+- **Politica de privacidad publicada en una URL** (obligatoria) y completar la seccion de "Privacidad de la app" (App Privacy) en App Store Connect: que datos se recogen (fotos, ubicacion) y para que.
+- Capturas de pantalla por tamano de dispositivo, icono, descripcion, categoria.
+- Si es una herramienta interna para tus empresas clientas y no para el publico general, evalua **Apple Business Manager / distribucion a la medida (Custom Apps)** en vez de la App Store publica — evita la revision publica y el limite de "una empresa = un revisor confundido por una app de nicho".
+
+**En ambos casos**
+- Necesitas una politica de privacidad real (puedo redactar un borrador si me dices el nombre legal de la empresa y un correo de contacto).
+- El dominio de produccion debe tener HTTPS valido (Capacitor con `cleartext: false` no carga `http://`).
+
+## Publicidad y planes (gratis con anuncios / de pago sin anuncios)
+
+La tabla `companies` ya tenia una columna `plan` (antes usada para trial/activo
+del negocio). Se reutiliza ese mismo campo para el modelo de monetizacion:
+
+- El endpoint publico `GET /api/companies/:slug` ahora responde `adsEnabled`
+  (`true` salvo que `plan = 'premium'`).
+- La app del trabajador (`public/c/index.html` + `app.js`) muestra un banner
+  reservado (`#adBanner`) abajo de la pantalla cuando `adsEnabled` es `true`,
+  y lo oculta automaticamente si la empresa esta en plan `premium`.
+- Para pasar una empresa a "sin anuncios", el super-admin solo cambia su
+  `plan` a `premium` desde `/admin` (ya soportado por `PATCH` de empresa en
+  `src/routes/admin.js`) — no hace falta tocar codigo.
+
+Lo que falta para produccion real (a proposito no se hizo hoy, son decisiones
+de negocio):
+
+1. **Red de anuncios**: en la app nativa (Capacitor) lo normal es Google
+   AdMob (banner nativo, mejor rendimiento que un banner HTML); en la version
+   web, Google AdSense u otra red de anuncios web. El `<div id="adBanner">`
+   queda como el punto donde se monta el SDK que elijas.
+2. **Cobro para quitar anuncios**: conectar una pasarela de pagos (Stripe es
+   la mas simple de integrar) que, al pagar, actualice `plan = 'premium'`
+   automaticamente via webhook (hoy ese cambio es manual desde `/admin`).
+3. Decidir si el plan gratis tiene algun limite adicional (ej. cantidad de
+   sitios o fotos) ademas de los anuncios, usando la columna `max_sites` que
+   ya existe.
+
 ## Fuera de alcance en esta version
 
-- Cobro/facturacion automatica: el estado activo/suspendido se maneja manual desde `/admin`.
+- Cobro/facturacion automatica: el estado activo/suspendido y el plan
+  (free/premium) se manejan manual desde `/admin`; falta conectar Stripe u
+  otra pasarela para que el pago cambie el plan solo.
+- Red de anuncios real conectada (el banner esta reservado pero vacio: ver
+  seccion "Publicidad y planes").
+- Compilacion/firma real de los binarios de Play Store y App Store (requiere
+  cuentas de desarrollador y, para iOS, un Mac — ver seccion "App nativa").
 - Login de usuario tradicional por empresa (decidido explicitamente).
 - Multi-idioma (queda en espanol).

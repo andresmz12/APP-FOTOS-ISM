@@ -107,3 +107,23 @@
 .step.anim-exit-fwd { transform: translateX(-36px); opacity: 0; }
 .step.anim-exit-back { transform: translateX(36px); opacity: 0; }
 .step.anim-center { transform: translateX(0); opacity: 1; }
+
+/* --- Banner de publicidad (plan gratuito) --- */
+.ad-banner {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 8px 12px;
+  background: var(--surface-alt);
+  border-top: 1px solid var(--border-strong);
+  color: var(--ink-500);
+  font-size: 12px;
+  text-align: center;
+}
+.ad-banner.hidden { display: none; }

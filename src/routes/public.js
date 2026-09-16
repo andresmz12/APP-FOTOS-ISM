@@ -17,7 +17,10 @@ router.get('/:slug', resolveCompany, (req, res) => {
     industry: c.industry,
     logoUrl: c.logo_url,
     brandColor: c.brand_color,
-    status: c.status
+    status: c.status,
+    // 'premium' quita los anuncios en la app del trabajador; cualquier otro
+    // valor de plan (trial, active, free, etc.) los deja activos.
+    adsEnabled: c.plan !== 'premium'
   });
 });
 

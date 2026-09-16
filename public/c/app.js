@@ -145,6 +145,8 @@
         $('suspendedBanner').style.display = 'block';
         document.querySelectorAll('#keypad button').forEach((b) => { b.disabled = true; });
       }
+      const adBanner = $('adBanner');
+      if (adBanner) adBanner.classList.toggle('hidden', !c.adsEnabled);
     } catch (err) {
       $('companyName').textContent = 'Empresa no encontrada';
       $('step1').innerHTML = '<div class="card">No se encontro esta empresa. Verifica el enlace.</div>';
@@ -392,12 +394,7 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Incluye el codigo de locacion junto al nombre: varios sitios pueden
-        // compartir el mismo nombre (ej. varias tiendas "Jewel-Osco"), y sin
-        // el codigo no se puede saber cual de todas es en la foto.
-        const siteLabel = state.site.site_code ? `${state.site.name} · ${state.site.site_code}` : state.site.name;
         const lines = [
-          siteLabel,
           address || (lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'Ubicacion no disponible'),
           new Date().toLocaleString('es-MX')
         ];

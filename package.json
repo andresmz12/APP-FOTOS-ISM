@@ -5,12 +5,16 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "migrate": "node src/db/migrate.js"
+    "migrate": "node src/db/migrate.js",
+    "cap:sync": "cap sync",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.2",
     "@sendgrid/mail": "^8.1.4",
     "archiver": "^7.0.1",
     "cloudinary": "^2.5.1",
@@ -21,5 +25,11 @@
     "multer": "^1.4.5-lts.1",
     "pdfkit": "^0.15.1",
     "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
+    "typescript": "^5.9.3"
   }
 }

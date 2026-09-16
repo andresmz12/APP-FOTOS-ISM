@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FieldProof</string>
+    <string name="title_activity_main">FieldProof</string>
+    <string name="package_name">com.fieldproof.app</string>
+    <string name="custom_url_scheme">com.fieldproof.app</string>
+</resources>

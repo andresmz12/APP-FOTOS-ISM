@@ -1,3 +1,12 @@
 node_modules/
 .env
 *.log
+
+# Capacitor: se versiona el proyecto nativo, pero no los artefactos de build
+android/app/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/
+ios/App/Pods/
+ios/App/App/public/
+ios/App/build/
