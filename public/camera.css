@@ -1,0 +1,38 @@
+/* --- Banner de estado de GPS --- */
+.geo-banner {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 11px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+  margin: 14px 0 4px;
+}
+.geo-banner .icon { flex-shrink: 0; }
+.geo-banner.geo-loading { background: var(--surface-alt); color: var(--ink-500); }
+.geo-banner.geo-ok { background: var(--success-bg); color: var(--success); }
+.geo-banner.geo-error { background: var(--danger-bg); color: var(--danger); }
+.geo-banner .geo-retry {
+  margin-left: auto; background: var(--danger); color: #fff; border: none; border-radius: 6px;
+  padding: 6px 12px; font-size: 12px; font-weight: 700; font-family: var(--font); cursor: pointer;
+}
+.icon.spin { animation: spin 1s linear infinite; }
+
+/* --- Boton de guardar en cada miniatura (opuesto al de eliminar) --- */
+.thumb .save-btn {
+  position: absolute; bottom: 5px; right: 5px;
+  background: rgba(15,23,21,.65); color: #fff; border: none;
+  width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.thumb .save-btn svg { width: 14px; height: 14px; }
+
+/* --- Banner de publicidad (plan gratis) --- */
+.ad-banner {
+  position: sticky; bottom: 0; left: 0; right: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 50px; padding: 8px 16px;
+  background: var(--surface-alt); border-top: 1px solid var(--border-strong);
+  color: var(--ink-500); font-size: 12px; text-align: center;
+}
+.ad-banner.hidden { display: none; }
+.ad-banner a { color: var(--brand-text); font-weight: 600; text-decoration: none; border-bottom: 1px solid currentColor; }
+
+.jump-links { text-align: center; margin: 4px 0 0; }
+.jump-links a { color: var(--ink-500); font-size: 12.5px; text-decoration: underline; }
