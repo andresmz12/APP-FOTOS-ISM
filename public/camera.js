@@ -85,21 +85,16 @@
     $('btnGeoRetry').addEventListener('click', requestLocation);
   }
 
-  function shortAddress(addr, fallback) {
-    if (!addr) return fallback || null;
-    const street = [addr.road, addr.house_number].filter(Boolean).join(' ');
-    const locality = addr.suburb || addr.neighbourhood || addr.city_district || '';
-    const city = addr.city || addr.town || addr.village || addr.municipality || '';
-    const state = addr.state || '';
-    const parts = [...new Set([street, locality, city, state].filter(Boolean))];
-    return parts.slice(0, 3).join(', ') || fallback || null;
-  }
-
+  // Reverse geocoding via el backend (no directo a Nominatim desde el
+  // navegador): asi se puede usar Google Maps cuando hay API key configurada
+  // (GOOGLE_MAPS_API_KEY), que da direcciones mucho mas exactas a nivel de
+  // calle que Nominatim/OSM en la mayoria de Latinoamerica.
   async function reverseGeocodeClient(lat, lng) {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+      const res = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`);
+      if (!res.ok) return null;
       const data = await res.json();
-      return shortAddress(data.address, data.display_name);
+      return data.address || null;
     } catch {
       return null;
     }

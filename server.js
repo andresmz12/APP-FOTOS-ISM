@@ -6,6 +6,8 @@ const cors = require('cors');
 const publicRoutes = require('./src/routes/public');
 const mediaRoutes = require('./src/routes/media');
 const adminRoutes = require('./src/routes/admin');
+const asyncHandler = require('./src/utils/asyncHandler');
+const { reverseGeocode } = require('./src/services/geocode');
 
 const REQUIRED_ENV = ['DATABASE_URL', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'PLATFORM_ADMIN_PASSWORD'];
 const missingEnv = REQUIRED_ENV.filter((key) => !process.env[key]);
@@ -22,6 +24,22 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (req, res) => res.json({ ok: true }));
+
+// GET /api/geocode?lat=&lng= -> direccion legible para una coordenada, usada
+// por la camara publica (sin empresa) y por la app de trabajador antes de
+// tomar la foto. Centralizado aca (en vez de llamar a Nominatim directo
+// desde el navegador) para poder usar Google Maps cuando hay API key
+// (mas precision de calle) y para no violar la politica de uso de Nominatim
+// con llamadas sin identificar desde el cliente.
+app.get('/api/geocode', asyncHandler(async (req, res) => {
+  const lat = Number(req.query.lat);
+  const lng = Number(req.query.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    return res.status(400).json({ error: 'Coordenadas invalidas' });
+  }
+  const address = await reverseGeocode(lat, lng);
+  res.json({ address });
+}));
 
 app.use('/api/companies', publicRoutes);
 app.use('/api/companies', mediaRoutes);

@@ -52,6 +52,7 @@ public/
    - `PLATFORM_ADMIN_PASSWORD`: la contrasena unica para entrar a `/admin` (tu panel de super-admin).
    - `SESSION_SECRET`: cadena aleatoria larga para firmar el token de sesion del super-admin.
    - `PUBLIC_APP_URL`: URL publica de la app en Railway, se usa en los correos de aviso.
+   - `GOOGLE_MAPS_API_KEY` (opcional): si la defines, la direccion que se quema en las fotos usa Google Maps Geocoding en vez de Nominatim/OpenStreetMap. Da direcciones exactas a nivel de calle en muchas mas zonas de Latinoamerica (Nominatim, al ser gratis y basado en OSM, en varias ciudades/barrios solo tiene datos a nivel de municipio). Se activa en <https://console.cloud.google.com/> habilitando "Geocoding API" y creando una API key — Google da USD 200/mes de credito gratis, que cubre miles de fotos. Sin esta variable, la app sigue funcionando igual pero con Nominatim (gratis, menos preciso en algunas zonas).
 
 2. Instala dependencias:
    ```
