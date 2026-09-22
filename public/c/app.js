@@ -366,19 +366,23 @@
 
   const MAX_PHOTO_DIMENSION = 2200; // limita el lado mayor para subidas rapidas y confiables en campo
 
-  // Dibuja un pin de mapa centrado en un cuadro, redondeado por el llamador
-  // via clip(). Es un icono generado con canvas (sin costo de API de mapas):
-  // circulo blanco + gota + punto interior, mismo estilo del mockup de /index.html.
-  function drawMapIcon(ctx, x, y, size) {
-    const r = Math.round(size * 0.16);
-    ctx.save();
+  function roundRectPath(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
-    ctx.arcTo(x + size, y, x + size, y + size, r);
-    ctx.arcTo(x + size, y + size, x, y + size, r);
-    ctx.arcTo(x, y + size, x, y, r);
-    ctx.arcTo(x, y, x + size, y, r);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
+  }
+
+  // Dibuja un pin de mapa centrado en un cuadro redondeado. Es un icono
+  // generado con canvas (sin costo de API de mapas): circulo blanco + gota +
+  // punto interior.
+  function drawMapIcon(ctx, x, y, size) {
+    const r = Math.round(size * 0.28);
+    ctx.save();
+    roundRectPath(ctx, x, y, size, size, r);
     ctx.clip();
 
     const grad = ctx.createLinearGradient(x, y, x + size, y + size);
@@ -445,46 +449,73 @@
         const addressText = address || coordsText || 'Ubicacion no disponible';
         const dateText = new Date().toLocaleString('es-MX');
 
-        const pad = Math.round(width * 0.025);
-        const mapSize = Math.round(width * 0.16);
-        const barHeight = mapSize + pad * 2;
-
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(0, height - barHeight, width, barHeight);
-
-        const mapX = pad;
-        const mapY = height - barHeight + pad;
-        drawMapIcon(ctx, mapX, mapY, mapSize);
-
-        const textX = mapX + mapSize + pad;
-        const maxTextWidth = width - textX - pad;
+        // Tarjeta flotante (como la de Fotos/Mapas de Apple) en vez de una
+        // barra que ocupa todo el ancho: se ajusta al contenido, con esquinas
+        // redondeadas y sombra suave.
+        const margin = Math.round(width * 0.032);
+        const cardPad = Math.round(width * 0.022);
+        const mapSize = Math.round(width * 0.15);
         const addressSize = Math.round(width * 0.026);
-        const smallSize = Math.round(width * 0.02);
-        const lineGap = Math.round(mapSize * 0.08);
+        const smallSize = Math.round(width * 0.019);
+        const lineGap = Math.round(mapSize * 0.09);
 
-        // Centra el bloque de texto verticalmente segun cuantas lineas lleve
-        // (coordenadas solo se muestra aparte si hay una direccion legible).
         const showCoordsLine = Boolean(address && coordsText);
         const lineCount = showCoordsLine ? 3 : 2;
+        const cardHeight = mapSize + cardPad * 2;
+
+        ctx.font = `700 ${addressSize}px sans-serif`;
+        const addressWidth = ctx.measureText(addressText).width;
+        ctx.font = `500 ${smallSize}px ui-monospace, SFMono-Regular, monospace`;
+        const coordsWidth = showCoordsLine ? ctx.measureText(coordsText).width : 0;
+        ctx.font = `500 ${smallSize}px sans-serif`;
+        const dateWidth = ctx.measureText(dateText).width;
+        const textContentWidth = Math.max(addressWidth, coordsWidth, dateWidth);
+
+        const maxCardWidth = width - margin * 2;
+        const idealCardWidth = mapSize + cardPad * 3 + textContentWidth;
+        const cardWidth = Math.min(maxCardWidth, idealCardWidth);
+        const textMaxWidth = cardWidth - mapSize - cardPad * 3;
+
+        const cardX = margin;
+        const cardY = height - margin - cardHeight;
+        const radius = Math.round(cardHeight * 0.26);
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,.35)';
+        ctx.shadowBlur = Math.round(width * 0.015);
+        ctx.shadowOffsetY = Math.round(width * 0.006);
+        ctx.fillStyle = 'rgba(15,23,21,.74)';
+        roundRectPath(ctx, cardX, cardY, cardWidth, cardHeight, radius);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.strokeStyle = 'rgba(255,255,255,.10)';
+        ctx.lineWidth = Math.max(1, width * 0.0015);
+        roundRectPath(ctx, cardX, cardY, cardWidth, cardHeight, radius);
+        ctx.stroke();
+
+        const mapX = cardX + cardPad;
+        const mapY = cardY + cardPad;
+        drawMapIcon(ctx, mapX, mapY, mapSize);
+
+        const textX = mapX + mapSize + cardPad;
         const blockHeight = addressSize + smallSize * (lineCount - 1) + lineGap * (lineCount - 1);
-        let cursorY = mapY + (mapSize - blockHeight) / 2 + addressSize * 0.8;
+        let cursorY = mapY + (mapSize - blockHeight) / 2 + addressSize * 0.78;
 
         ctx.textBaseline = 'alphabetic';
         ctx.fillStyle = '#fff';
         ctx.font = `700 ${addressSize}px sans-serif`;
-        ctx.fillText(truncateToWidth(ctx, addressText, maxTextWidth), textX, cursorY);
+        ctx.fillText(truncateToWidth(ctx, addressText, textMaxWidth), textX, cursorY);
 
-        ctx.fillStyle = 'rgba(255,255,255,.8)';
+        ctx.fillStyle = 'rgba(255,255,255,.72)';
         if (showCoordsLine) {
           cursorY += smallSize + lineGap;
           ctx.font = `500 ${smallSize}px ui-monospace, SFMono-Regular, monospace`;
-          ctx.fillText(truncateToWidth(ctx, coordsText, maxTextWidth), textX, cursorY);
-          ctx.font = `500 ${smallSize}px sans-serif`;
-        } else {
-          ctx.font = `500 ${smallSize}px sans-serif`;
+          ctx.fillText(truncateToWidth(ctx, coordsText, textMaxWidth), textX, cursorY);
         }
         cursorY += smallSize + lineGap;
-        ctx.fillText(truncateToWidth(ctx, dateText, maxTextWidth), textX, cursorY);
+        ctx.font = `500 ${smallSize}px sans-serif`;
+        ctx.fillText(truncateToWidth(ctx, dateText, textMaxWidth), textX, cursorY);
 
         canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9);
       };
