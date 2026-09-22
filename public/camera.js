@@ -23,7 +23,6 @@
 
   function setPhotoControlsEnabled(enabled) {
     $('btnTakePhoto').disabled = !enabled;
-    $('btnPickGallery').disabled = false; // no depende del GPS
   }
 
   function requestLocation() {
@@ -54,12 +53,17 @@
   async function handleGeoSuccess(pos) {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
+    // "address" se deja en null si el reverse geocoding no devolvio nada
+    // (en vez de rellenarlo con las coordenadas): stampImage decide por su
+    // cuenta como mostrar el respaldo, y asi no se duplican las coordenadas
+    // como "direccion" y de nuevo como "coordenadas" en el sello.
     const address = await reverseGeocodeClient(lat, lng);
-    currentGeo = { lat, lng, address: address || `${lat.toFixed(6)}, ${lng.toFixed(6)}` };
+    currentGeo = { lat, lng, address };
+    const displayText = address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 
     const banner = $('geoBanner');
     banner.className = 'geo-banner geo-ok';
-    banner.innerHTML = `<svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M10 18s6-5.2 6-9.6A6 6 0 1 0 4 8.4C4 12.8 10 18 10 18Z" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 8.4l1.7 1.7 3.3-3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${currentGeo.address}</span>`;
+    banner.innerHTML = `<svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M10 18s6-5.2 6-9.6A6 6 0 1 0 4 8.4C4 12.8 10 18 10 18Z" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 8.4l1.7 1.7 3.3-3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${displayText}</span>`;
     setPhotoControlsEnabled(true);
   }
 
@@ -360,7 +364,6 @@
   }
 
   $('btnTakePhoto').addEventListener('click', () => $('cameraInput').click());
-  $('btnPickGallery').addEventListener('click', () => $('galleryInput').click());
   $('cameraInput').addEventListener('change', (e) => {
     if (!currentGeo) {
       toast('Espera a que se obtenga tu ubicacion antes de tomar la foto.');
@@ -370,7 +373,6 @@
     addFiles(e.target.files);
     e.target.value = '';
   });
-  $('galleryInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
 
   // ============================================================
   // Plan gratis con anuncios / premium sin anuncios. Como esta app publica

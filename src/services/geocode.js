@@ -1,13 +1,26 @@
-// Misma logica que shortAddress() en public/c/app.js: direccion corta y legible
-// en vez del display_name completo de Nominatim (que puede ser muy largo).
+// Direccion corta y legible a partir de los componentes de Nominatim, en vez
+// del display_name completo (que puede ser muy largo). Si hay calle, se usa
+// "Calle numero, barrio/ciudad" (lo mas preciso que Nominatim tenga). Si NO
+// hay calle -- comun en zonas de Latinoamerica donde OSM no tiene el
+// callejero cargado -- en vez de quedarse en solo la ciudad, siempre se
+// arma "Ciudad, Departamento/Estado, Pais" para que el respaldo sea un dato
+// completo y no una direccion a medias.
 function shortAddress(addr, fallback) {
   if (!addr) return fallback || null;
+
   const street = [addr.road, addr.house_number].filter(Boolean).join(' ');
-  const locality = addr.suburb || addr.neighbourhood || addr.city_district || '';
-  const city = addr.city || addr.town || addr.village || addr.municipality || '';
-  const state = addr.state || '';
-  const parts = [...new Set([street, locality, city, state].filter(Boolean))];
-  return parts.slice(0, 3).join(', ') || fallback || null;
+  const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || '';
+  const state = addr.state || addr.region || '';
+  const country = addr.country || '';
+
+  if (street) {
+    const locality = addr.suburb || addr.neighbourhood || addr.city_district || '';
+    const parts = [...new Set([street, locality, city].filter(Boolean))];
+    return parts.slice(0, 3).join(', ') || fallback || null;
+  }
+
+  const parts = [city, state, country].filter(Boolean);
+  return parts.length ? parts.join(', ') : (fallback || null);
 }
 
 /**
