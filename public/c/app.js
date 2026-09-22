@@ -373,6 +373,59 @@
 
   const MAX_PHOTO_DIMENSION = 2200; // limita el lado mayor para subidas rapidas y confiables en campo
 
+  // Dibuja un pin de mapa centrado en un cuadro, redondeado por el llamador
+  // via clip(). Es un icono generado con canvas (sin costo de API de mapas):
+  // circulo blanco + gota + punto interior, mismo estilo del mockup de /index.html.
+  function drawMapIcon(ctx, x, y, size) {
+    const r = Math.round(size * 0.16);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + size, y, x + size, y + size, r);
+    ctx.arcTo(x + size, y + size, x, y + size, r);
+    ctx.arcTo(x, y + size, x, y, r);
+    ctx.arcTo(x, y, x + size, y, r);
+    ctx.closePath();
+    ctx.clip();
+
+    const grad = ctx.createLinearGradient(x, y, x + size, y + size);
+    grad.addColorStop(0, '#6b8f7c');
+    grad.addColorStop(0.45, '#3f6553');
+    grad.addColorStop(1, '#1f3b30');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y, size, size);
+
+    ctx.strokeStyle = 'rgba(255,255,255,.18)';
+    ctx.lineWidth = Math.max(1, size * 0.012);
+    for (let i = 1; i < 3; i++) {
+      const gx = x + (size / 3) * i;
+      ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + size); ctx.stroke();
+      const gy = y + (size / 3) * i;
+      ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + size, gy); ctx.stroke();
+    }
+    ctx.restore();
+
+    const cx = x + size / 2;
+    const cy = y + size * 0.42;
+    const pr = size * 0.17;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(cx - pr * 0.95, cy + pr * 0.55);
+    ctx.lineTo(cx + pr * 0.95, cy + pr * 0.55);
+    ctx.lineTo(cx, cy + pr * 2.2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, pr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1f3b30';
+    ctx.beginPath();
+    ctx.arc(cx, cy, pr * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Sello estilo "timestamp camera": icono de mapa a la izquierda + direccion,
+  // coordenadas exactas y fecha/hora a la derecha, quemado en la foto.
   function stampImage(file, { lat, lng, address }) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -394,26 +447,51 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        const lines = [
-          address || (lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'Ubicacion no disponible'),
-          new Date().toLocaleString('es-MX')
-        ];
+        const hasCoords = lat != null && lng != null;
+        const coordsText = hasCoords ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : null;
+        const addressText = address || coordsText || 'Ubicacion no disponible';
+        const dateText = new Date().toLocaleString('es-MX');
 
-        const pad = Math.round(width * 0.02);
-        const lineHeight = Math.round(width * 0.028);
-        const fontSize = Math.round(width * 0.022);
-        const boxHeight = lineHeight * lines.length + pad;
+        const pad = Math.round(width * 0.025);
+        const mapSize = Math.round(width * 0.16);
+        const barHeight = mapSize + pad * 2;
 
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(0, height - boxHeight, width, boxHeight);
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(0, height - barHeight, width, barHeight);
 
+        const mapX = pad;
+        const mapY = height - barHeight + pad;
+        drawMapIcon(ctx, mapX, mapY, mapSize);
+
+        const textX = mapX + mapSize + pad;
+        const maxTextWidth = width - textX - pad;
+        const addressSize = Math.round(width * 0.026);
+        const smallSize = Math.round(width * 0.02);
+        const lineGap = Math.round(mapSize * 0.08);
+
+        // Centra el bloque de texto verticalmente segun cuantas lineas lleve
+        // (coordenadas solo se muestra aparte si hay una direccion legible).
+        const showCoordsLine = Boolean(address && coordsText);
+        const lineCount = showCoordsLine ? 3 : 2;
+        const blockHeight = addressSize + smallSize * (lineCount - 1) + lineGap * (lineCount - 1);
+        let cursorY = mapY + (mapSize - blockHeight) / 2 + addressSize * 0.8;
+
+        ctx.textBaseline = 'alphabetic';
         ctx.fillStyle = '#fff';
-        ctx.font = `600 ${fontSize}px sans-serif`;
-        const maxTextWidth = width - pad * 2;
-        lines.forEach((line, i) => {
-          const text = truncateToWidth(ctx, line, maxTextWidth);
-          ctx.fillText(text, pad, height - boxHeight + pad / 2 + lineHeight * (i + 1) - lineHeight * 0.3);
-        });
+        ctx.font = `700 ${addressSize}px sans-serif`;
+        ctx.fillText(truncateToWidth(ctx, addressText, maxTextWidth), textX, cursorY);
+
+        ctx.fillStyle = 'rgba(255,255,255,.8)';
+        if (showCoordsLine) {
+          cursorY += smallSize + lineGap;
+          ctx.font = `500 ${smallSize}px ui-monospace, SFMono-Regular, monospace`;
+          ctx.fillText(truncateToWidth(ctx, coordsText, maxTextWidth), textX, cursorY);
+          ctx.font = `500 ${smallSize}px sans-serif`;
+        } else {
+          ctx.font = `500 ${smallSize}px sans-serif`;
+        }
+        cursorY += smallSize + lineGap;
+        ctx.fillText(truncateToWidth(ctx, dateText, maxTextWidth), textX, cursorY);
 
         canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9);
       };

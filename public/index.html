@@ -91,19 +91,51 @@
   .mock-photo .surface::before { width: 46%; height: 58%; top: 14%; left: 10%; transform: skewY(-3deg); }
   .mock-photo .surface::after { width: 30%; height: 30%; bottom: 16%; right: 12%; background: rgba(255,255,255,.1); border-radius: 50%; }
   .mock-stamp {
-    position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 14px 13px;
-    background: linear-gradient(0deg, rgba(0,0,0,.62), rgba(0,0,0,0));
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 10px;
+    background: rgba(0,0,0,.6);
     color: #fff;
+    display: flex; align-items: center; gap: 10px;
   }
-  .mock-stamp .l1 { font-size: 12.5px; font-weight: 700; }
-  .mock-stamp .l2 { font-size: 10.5px; opacity: .82; margin-top: 2px; }
-  .mock-stamp .l3 { font-size: 10.5px; opacity: .68; margin-top: 1px; }
-  .mock-pin {
-    position: absolute; top: 14px; right: 14px; width: 26px; height: 26px; border-radius: 50%;
-    background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: center;
+  .mock-stamp .mock-map {
+    flex-shrink: 0; width: 52px; height: 52px; border-radius: 10px;
+    background: linear-gradient(135deg, #6b8f7c 0%, #3f6553 45%, #1f3b30 100%);
+    display: flex; align-items: center; justify-content: center;
+    background-image:
+      linear-gradient(135deg, #6b8f7c 0%, #3f6553 45%, #1f3b30 100%),
+      linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px);
+    background-size: auto, 17px 17px, 17px 17px;
   }
-  .mock-pin svg { width: 13px; height: 13px; color: var(--brand); }
+  .mock-stamp .mock-map svg { width: 18px; height: 18px; color: #fff; }
+  .mock-stamp .lines { min-width: 0; }
+  .mock-stamp .l1 { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mock-stamp .l2 { font-size: 10px; opacity: .8; margin-top: 3px; font-family: ui-monospace, monospace; }
+  .mock-stamp .l3 { font-size: 10px; opacity: .8; margin-top: 2px; }
   .mock-caption { text-align: center; font-size: 12.5px; color: var(--ink-soft); margin-top: 18px; }
+
+  /* ---------- entry cards: donde entra cada quien ---------- */
+  .entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 8px; }
+  .entry-card { border: 1.5px solid var(--line); border-radius: 16px; padding: 24px; background: #fff; }
+  .entry-card .tag { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--brand); margin-bottom: 10px; }
+  .entry-card h3 { font-size: 17px; font-weight: 800; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .entry-card p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 0 0 18px; }
+  .entry-form { display: flex; gap: 8px; }
+  .entry-form input {
+    flex: 1; min-width: 0; border: 1.5px solid var(--line); border-radius: 8px; padding: 11px 13px;
+    font-size: 14px; font-family: inherit; color: var(--ink); background: var(--paper);
+  }
+  .entry-form input:focus { outline: none; border-color: var(--brand); }
+  .entry-form button, .entry-card > a.btn-primary {
+    background: var(--brand); color: #fff; border: none; border-radius: 8px; padding: 0 18px;
+    font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .entry-card > a.btn-primary { display: inline-flex; align-items: center; justify-content: center; padding: 12px 18px; text-decoration: none; width: 100%; }
+  .entry-form button:hover, .entry-card > a.btn-primary:hover { background: var(--brand-light); }
+  .entry-hint { font-size: 12px; color: var(--ink-soft); margin-top: 9px; }
+
+  @media (max-width: 640px) {
+    .entry-grid { grid-template-columns: 1fr; }
+  }
 
   /* ---------- how it works ---------- */
   .section { padding: 64px 0; border-top: 1px solid var(--line); }
@@ -181,14 +213,12 @@
         <h1>La prueba de que el trabajo se hizo, con fecha, lugar y firma GPS.</h1>
         <p class="lead">
           Tu equipo toma la foto y llega directo a la carpeta de su empresa y sitio,
-          con el sello de ubicacion quemado en la imagen. Sin apps que instalar ni
-          contrasenas que recordar — solo el codigo de su sitio.
+          con la ubicacion exacta y la fecha/hora quemadas en la imagen, como una
+          camara con timestamp GPS. Sin apps que instalar ni contrasenas que
+          recordar — solo el codigo de su sitio.
         </p>
         <div class="cta-row">
-          <a class="btn-primary" href="/admin">
-            Entrar al panel de plataforma
-            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
+          <a class="link-secondary" href="#entrar">¿Donde entro yo?</a>
           <a class="link-secondary" href="#como-funciona">Ver como funciona</a>
         </div>
       </div>
@@ -197,18 +227,46 @@
         <div class="mock-stage">
           <div class="mock-photo">
             <div class="surface">
-              <div class="mock-pin">
-                <svg viewBox="0 0 20 20" fill="none"><path d="M10 18s6-5.2 6-9.6A6 6 0 1 0 4 8.4C4 12.8 10 18 10 18Z" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="8.4" r="2" stroke="currentColor" stroke-width="1.8"/></svg>
-              </div>
               <div class="mock-stamp">
-                <div class="l1">Sucursal Centro</div>
-                <div class="l2">Av. Reforma 123, Ciudad de Mexico</div>
-                <div class="l3">01 Sep 2026, 11:04 a.m.</div>
+                <div class="mock-map">
+                  <svg viewBox="0 0 20 20" fill="none"><path d="M10 18s6-5.2 6-9.6A6 6 0 1 0 4 8.4C4 12.8 10 18 10 18Z" fill="#fff"/><circle cx="10" cy="8.4" r="2" fill="#1f3b30"/></svg>
+                </div>
+                <div class="lines">
+                  <div class="l1">Av. Reforma 123, Ciudad de Mexico</div>
+                  <div class="l2">19.427500, -99.167500</div>
+                  <div class="l3">01 Sep 2026, 11:04 a.m.</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
         <p class="mock-caption">Cada foto tomada en sitio queda marcada asi, automaticamente.</p>
+      </div>
+    </section>
+
+    <section class="section" id="entrar" style="padding-top: 0; border-top: none;">
+      <div class="section-head">
+        <div class="eyebrow">Empieza aqui</div>
+        <h2>¿Quien eres?</h2>
+        <p>Hay dos formas de entrar, segun tu rol.</p>
+      </div>
+      <div class="entry-grid">
+        <div class="entry-card">
+          <div class="tag">Trabajador de campo</div>
+          <h3>Subir fotos de un sitio</h3>
+          <p>Tu empresa te da un enlace propio, algo como <code>fieldproof.app/c/tu-empresa</code>. Si ya lo tienes, entra directo por ahi. Si solo conoces el codigo (slug) de tu empresa, escribelo aqui:</p>
+          <form class="entry-form" id="workerJumpForm">
+            <input type="text" id="workerSlugInput" placeholder="codigo de tu empresa" autocomplete="off" autocapitalize="off" />
+            <button type="submit">Entrar</button>
+          </form>
+          <p class="entry-hint" id="workerJumpHint">No sabes el codigo de tu empresa? Pidelo a tu administrador — el mismo enlace sirve para subir fotos y para el PIN de galeria.</p>
+        </div>
+        <div class="entry-card">
+          <div class="tag">Dueño / administrador</div>
+          <h3>Gestionar empresas y sitios</h3>
+          <p>Da de alta tu empresa, crea sitios y consigue el enlace para tus trabajadores desde el panel de plataforma.</p>
+          <a class="btn-primary" href="/admin">Entrar al panel de plataforma</a>
+        </div>
       </div>
     </section>
 
@@ -276,5 +334,15 @@
 
     <footer>FieldProof — evidencia fotografica de campo</footer>
   </div>
+
+  <script>
+    document.getElementById('workerJumpForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var input = document.getElementById('workerSlugInput');
+      var slug = input.value.trim().toLowerCase().replace(/^\/+|\/+$/g, '').replace(/^c\//, '');
+      if (!slug) { input.focus(); return; }
+      window.location.href = '/c/' + encodeURIComponent(slug);
+    });
+  </script>
 </body>
 </html>
